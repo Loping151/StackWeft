@@ -1,0 +1,4700 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>StackWeft · Agent 协作</title>
+  <link rel="icon" href="/assets/icon.png" type="image/png">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f1e7;
+      --bg-2: #fbf6ee;
+      --panel: rgba(255, 250, 241, .92);
+      --panel-solid: #fffaf1;
+      --panel-soft: #f1e7d8;
+      --panel-deep: #e8dbc9;
+      --line: #d6c4ae;
+      --line-soft: rgba(117, 98, 75, .18);
+      --line-strong: rgba(192, 122, 64, .42);
+      --text: #2c2a26;
+      --soft: #4d4740;
+      --muted: #756b60;
+      --dim: #9a8875;
+      --warp: #7d8f72;
+      --weft: #c07a40;
+      --success: #7d8f72;
+      --danger: #b85757;
+      --radius: 8px;
+      --shadow: 0 18px 54px rgba(111, 78, 42, .14);
+      --display: ui-serif, Georgia, "Songti SC", STSong, serif;
+      --body: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      min-height: 100%;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      overflow: hidden;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.56), rgba(246,241,231,0) 34%),
+        repeating-linear-gradient(90deg, rgba(192,122,64,.045) 0 1px, transparent 1px 28px),
+        var(--bg);
+      color: var(--text);
+      font: 14px/1.55 var(--body);
+      letter-spacing: 0;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      background:
+        repeating-linear-gradient(90deg, rgba(125,143,114,.05) 0 1px, transparent 1px 24px),
+        repeating-linear-gradient(0deg, rgba(192,122,64,.04) 0 1px, transparent 1px 24px),
+        linear-gradient(90deg, rgba(255,255,255,.34), rgba(255,255,255,0));
+      opacity: .72;
+      pointer-events: none;
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background:
+        linear-gradient(120deg, rgba(255,250,241,.32), rgba(232,219,201,.46) 62%),
+        linear-gradient(180deg, rgba(255,255,255,.38), transparent 28%);
+      pointer-events: none;
+    }
+
+    button,
+    textarea,
+    input {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: .52;
+    }
+
+    a {
+      color: #8b5d37;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    button:focus-visible,
+    textarea:focus-visible,
+    input:focus-visible,
+    summary:focus-visible,
+    a:focus-visible {
+      outline: 2px solid var(--warp);
+      outline-offset: 3px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .app {
+      height: 100vh;
+      height: 100dvh;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      overflow: hidden;
+    }
+
+    .topbar {
+      min-height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 12px 20px;
+      border-bottom: 1px solid rgba(192,122,64, .18);
+      background: rgba(255,250,241, .88);
+      backdrop-filter: blur(18px);
+    }
+
+    .brand {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-mark {
+      position: relative;
+      width: 42px;
+      height: 42px;
+      flex: 0 0 auto;
+      border: 1px solid rgba(192,122,64, .28);
+      border-radius: 9px;
+      overflow: hidden;
+      background: rgba(255,250,241, .94);
+    }
+
+    .brand-mark img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+    }
+
+    .brand-copy {
+      min-width: 0;
+    }
+
+    .brand-title {
+      margin: 0;
+      color: var(--text);
+      font: 22px/1.06 var(--display);
+      letter-spacing: 0;
+    }
+
+    .brand-title span {
+      color: var(--weft);
+      font-family: var(--body);
+      font-size: 13px;
+      font-weight: 700;
+      vertical-align: 2px;
+    }
+
+    .brand-subtitle {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 9px;
+      min-width: 0;
+      flex-wrap: wrap;
+    }
+
+    .chip,
+    .ghost-link,
+    .ghost-button,
+    .segmented {
+      min-height: 34px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: 1px solid var(--line-soft);
+      border-radius: var(--radius);
+      background: rgba(255,250,241, .86);
+      color: var(--soft);
+      white-space: nowrap;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.035);
+    }
+
+    .chip {
+      padding: 0 11px;
+      font-size: 12px;
+    }
+
+    .chip[data-tone="running"] {
+      border-color: rgba(125,143,114, .50);
+      background: rgba(125,143,114, .13);
+      color: #47533e;
+    }
+
+    .chip[data-tone="done"] {
+      border-color: rgba(192,122,64, .54);
+      background: rgba(192,122,64, .12);
+      color: #7a4523;
+    }
+
+    .chip[data-tone="failed"] {
+      border-color: rgba(255, 107, 115, .48);
+      background: rgba(255, 107, 115, .10);
+      color: #8e3838;
+    }
+
+    .ghost-link,
+    .ghost-button {
+      padding: 0 12px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .ghost-button[aria-pressed="true"] {
+      border-color: rgba(192,122,64, .58);
+      background: rgba(192,122,64, .13);
+      color: var(--weft);
+    }
+
+    .ghost-link:hover,
+    .ghost-button:hover,
+    .secondary:hover,
+    .icon-button:hover {
+      border-color: rgba(192,122,64, .36);
+      background: rgba(192,122,64, .12);
+      text-decoration: none;
+    }
+
+    .segmented {
+      padding: 3px;
+      gap: 3px;
+      user-select: none;
+    }
+
+    .segmented button {
+      min-width: 62px;
+      min-height: 28px;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 780;
+    }
+
+    body[data-mode="normal"] .mode-normal,
+    body[data-mode="pro"] .mode-pro {
+      background: var(--warp);
+      color: #fff;
+      box-shadow: 0 0 0 1px rgba(255,255,255,.05) inset;
+    }
+
+    .loom-shell {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(340px, 390px);
+      grid-template-rows: minmax(0, 1fr);   /* bound the row so each column scrolls internally */
+      overflow: hidden;
+      border-top: 1px solid rgba(255,255,255,.025);
+    }
+
+    body[data-mode="normal"] .loom-shell {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    body[data-mode="normal"] .pro-only {
+      display: none !important;
+    }
+
+    .workbench {
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto auto minmax(0, 1fr);
+      border-right: 1px solid rgba(192,122,64, .14);
+    }
+
+    body[data-mode="normal"] .workbench {
+      border-right: 0;
+    }
+
+    /* 大厂式版式：通栏背景带 + 内容统一收进一条居中列，标题/对话/输入框左缘对齐。
+       --col 是内容列宽，两侧自动留白；窄屏回落到 24px 边距。 */
+    :root { --col: 880px; }
+    .loom-context,
+    .relay-panel,
+    .result-strip,
+    .thread,
+    .composer-wrap {
+      padding-inline: max(24px, calc((100% - var(--col)) / 2));
+    }
+    .thread-inner,
+    .composer {
+      width: 100%;
+      max-width: none;
+      margin-inline: 0;
+    }
+
+    .loom-context {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 20px;
+      padding-block: 15px 13px;
+      background:
+        linear-gradient(90deg, rgba(125,143,114,.10), transparent 42%),
+        linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,0));
+      border-bottom: 1px solid var(--line-soft);
+    }
+
+    .loom-context h2 {
+      margin: 0;
+      color: var(--text);
+      font: 19px/1.25 var(--display);
+      letter-spacing: 0;
+    }
+
+    .loom-context p {
+      max-width: 760px;
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .run-meta {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .run-id {
+      max-width: 310px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .relay-panel {
+      padding-block: 12px;
+      border-bottom: 1px solid var(--line-soft);
+      background: rgba(255,250,241, .76);
+    }
+
+    .relay-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 10px;
+    }
+
+    .eyebrow {
+      color: var(--weft);
+      font-family: var(--mono);
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+
+    .relay-caption {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .relay-track {
+      min-height: 84px;
+      display: flex;
+      align-items: center;
+      overflow-x: auto;
+      /* vertical room so the active-agent focus pulse (glow + scale) isn't clipped —
+         overflow-x:auto forces the y-axis to clip, so the box must be tall enough */
+      padding: 16px 2px 8px;
+    }
+
+    .relay-step {
+      display: inline-flex;
+      align-items: center;
+      flex: 0 0 auto;
+    }
+
+    .relay-node {
+      min-width: 88px;
+      display: grid;
+      justify-items: center;
+      gap: 5px;
+    }
+
+    .relay-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 1px solid rgba(192,122,64, .28);
+      background: #f8efe2;
+      box-shadow: 0 0 0 3px rgba(125,143,114,.06);
+    }
+
+    .relay-role {
+      max-width: 112px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--soft);
+      font-size: 12px;
+      font-weight: 760;
+      white-space: nowrap;
+    }
+
+    .relay-node.active .relay-avatar {
+      border-color: rgba(125,143,114, .8);
+      box-shadow: 0 0 0 4px rgba(125,143,114,.16), 0 0 24px rgba(125,143,114,.24);
+    }
+
+    /* 焦点动画：当前正在工作的 Agent 持续脉动，让用户感知进行到哪一步、系统仍在活动 */
+    @keyframes relayWork {
+      0%, 100% { box-shadow: 0 0 0 3px rgba(125,143,114,.18), 0 0 12px rgba(125,143,114,.20); transform: scale(1); }
+      50%      { box-shadow: 0 0 0 6px rgba(125,143,114,.30), 0 0 22px rgba(125,143,114,.48); transform: scale(1.05); }
+    }
+    .relay-node.active.working .relay-avatar {
+      border-color: rgba(125,143,114, .95);
+      animation: relayWork 1.25s ease-in-out infinite;
+    }
+    .relay-node.active.working .relay-role {
+      color: #5f7350;
+      font-weight: 700;
+    }
+    .relay-node.active.working .relay-role::after {
+      content: "…";
+      display: inline-block;
+      width: 0; overflow: hidden;
+      vertical-align: bottom;
+      animation: relayDots 1.4s steps(4, end) infinite;
+    }
+    @keyframes relayDots { to { width: 1.1em; } }
+    @media (prefers-reduced-motion: reduce) {
+      .relay-node.active.working .relay-avatar { animation: none; box-shadow: 0 0 0 6px rgba(125,143,114,.28); }
+      .relay-node.active.working .relay-role::after { animation: none; width: 1.1em; }
+    }
+
+    .relay-node.done .relay-role {
+      color: #8d5b32;
+    }
+
+    .relay-edge {
+      position: relative;
+      flex: 0 0 clamp(46px, 7vw, 92px);
+      height: 36px;
+      margin: 0 3px;
+    }
+
+    .relay-edge::before,
+    .relay-edge::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 1px;
+      border-radius: 999px;
+      background: rgba(117,98,75, .25);
+    }
+
+    .relay-edge::before {
+      top: 15px;
+      background-image: repeating-linear-gradient(90deg, rgba(125,143,114,.55) 0 7px, transparent 7px 13px);
+    }
+
+    .relay-edge::after {
+      top: 21px;
+      background-image: repeating-linear-gradient(90deg, rgba(192,122,64,.42) 0 5px, transparent 5px 12px);
+    }
+
+    .relay-edge.done::before {
+      background-color: rgba(125,143,114, .48);
+      box-shadow: 0 0 18px rgba(125,143,114, .15);
+    }
+
+    .relay-edge.done::after {
+      background-color: rgba(192,122,64, .44);
+      box-shadow: 0 0 18px rgba(192,122,64, .14);
+    }
+
+    .relay-baton {
+      position: absolute;
+      left: 0;
+      top: 12px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--weft);
+      box-shadow: 0 0 0 5px rgba(192,122,64,.13), 0 0 22px rgba(192,122,64,.34);
+      animation: batonTravel 1.6s cubic-bezier(.21,.7,.22,1) forwards;
+    }
+
+    .relay-note {
+      position: absolute;
+      left: 0;
+      bottom: calc(100% + 3px);
+      max-width: 240px;
+      padding: 5px 7px;
+      border: 1px solid rgba(192,122,64,.28);
+      border-radius: 6px;
+      background: #fffaf1;
+      color: var(--soft);
+      font-size: 11px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      pointer-events: none;
+      animation: relayNote 1.6s cubic-bezier(.21,.7,.22,1) forwards;
+    }
+
+    .result-strip {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 12px;
+      padding-block: 12px;
+      border-bottom: 1px solid var(--line-soft);
+      background:
+        linear-gradient(90deg, rgba(192,122,64,.08), transparent 40%),
+        rgba(255,250,241, .82);
+    }
+
+    .result-title {
+      margin: 0;
+      color: var(--soft);
+      font-size: 13px;
+      font-weight: 760;
+    }
+
+    .result-text {
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 12px;
+      min-width: 0;
+    }
+
+    .result-meta {
+      margin-top: 3px;
+      color: var(--dim);
+      font: 11px/1.5 var(--mono);
+    }
+
+    .result-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .chat-zone {
+      min-height: 0;
+      display: grid;
+      grid-template-rows: minmax(0, 1fr) auto;
+    }
+
+    .thread {
+      min-height: 0;
+      overflow-y: auto;
+      padding-block: 22px;
+      scroll-behavior: smooth;
+    }
+
+    .thread-inner {
+      display: grid;
+      gap: 14px;
+    }
+
+    .message {
+      display: grid;
+      grid-template-columns: 38px minmax(0, 1fr);
+      gap: 11px;
+      align-items: start;
+    }
+
+    .message.user {
+      grid-template-columns: minmax(0, 1fr) 38px;
+    }
+
+    .avatar-img {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,.14);
+      background: #f8efe2;
+      box-shadow: 0 0 0 3px rgba(255,255,255,.025);
+    }
+
+    .message.user .avatar-img {
+      grid-column: 2;
+      grid-row: 1;
+      border-color: rgba(125,143,114,.52);
+    }
+
+    .bubble {
+      width: fit-content;
+      max-width: min(760px, 100%);
+      min-width: 0;
+      border: 1px solid var(--line-soft);
+      border-radius: 8px;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.035), rgba(255,255,255,0)),
+        rgba(255,250,241, .92);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 16px 42px rgba(0,0,0,.18);
+      padding: 11px 12px;
+    }
+
+    .message.user .bubble {
+      justify-self: end;
+      grid-column: 1;
+      grid-row: 1;
+      border-color: rgba(125,143,114,.46);
+      background:
+        linear-gradient(135deg, rgba(125,143,114,.20), rgba(125,143,114,.05)),
+        rgba(15, 27, 55, .94);
+    }
+
+    .message.agent .bubble {
+      border-left-color: rgba(192,122,64,.5);
+    }
+
+    .message.failed .bubble {
+      border-color: rgba(255,107,115,.44);
+      background: rgba(56, 21, 30, .62);
+    }
+
+    .message.handoff .bubble {
+      border-color: rgba(125,143,114,.34);
+      border-left-color: rgba(192,122,64,.55);
+      background:
+        repeating-linear-gradient(90deg, rgba(125,143,114,.045) 0 1px, transparent 1px 16px),
+        rgba(16, 21, 35, .94);
+    }
+
+    .message.confirm .bubble,
+    .message.clarify-answer .bubble,
+    .message.clarify-followup .bubble {
+      border-color: rgba(192,122,64,.42);
+      background: rgba(192,122,64, .10);
+    }
+
+    .role-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 5px;
+      color: var(--weft);
+      font-size: 12px;
+      font-weight: 760;
+    }
+
+    .role-line .stage-tag {
+      color: var(--dim);
+      font: 11px/1 var(--mono);
+      font-weight: 500;
+    }
+
+    .handoff-route {
+      margin-bottom: 7px;
+      color: #526642;
+      font-size: 12px;
+      font-weight: 760;
+    }
+
+    .handoff-route span {
+      color: var(--weft);
+      padding: 0 6px;
+    }
+
+    .bubble-text {
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    /* rendered markdown inside agent bubbles */
+    .bubble-text .md-h { font-weight: 700; margin: 7px 0 2px; }
+    .bubble-text .md-ul, .bubble-text .md-ol { margin: 4px 0; padding-left: 20px; white-space: normal; }
+    .bubble-text .md-ul { list-style: disc; } .bubble-text .md-ol { list-style: decimal; }
+    .bubble-text .md-ul li, .bubble-text .md-ol li { margin: 2px 0; }
+    .bubble-text strong { font-weight: 700; }
+    .bubble-text code.md-code {
+      background: rgba(125,143,114,.16); padding: 1px 5px; border-radius: 4px;
+      font-family: var(--mono); font-size: .9em;
+    }
+    .bubble-text pre.md-pre {
+      background: rgba(40,36,30,.06); border: 1px solid var(--line-soft); border-radius: 7px;
+      padding: 8px 10px; overflow-x: auto; margin: 6px 0;
+    }
+    .bubble-text pre.md-pre code { font-family: var(--mono); font-size: .86em; white-space: pre; background: none; padding: 0; }
+    .bubble-text a { color: var(--weft); text-decoration: underline; }
+
+    .bubble-meta {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+      color: var(--dim);
+      font-size: 11px;
+    }
+
+    .tech {
+      font-family: var(--mono);
+      color: #5d724d;
+    }
+
+    .message-links,
+    .attachment-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .message-link,
+    .result-link {
+      min-height: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 10px;
+      border: 1px solid rgba(125,143,114,.46);
+      border-radius: 7px;
+      background: rgba(125,143,114,.14);
+      color: #465b3c;
+      font-size: 12px;
+      font-weight: 720;
+      white-space: nowrap;
+    }
+
+    .attachment-card {
+      min-width: 0;
+      max-width: min(360px, 100%);
+      display: grid;
+      grid-template-columns: 48px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 8px;
+      padding: 7px;
+      border: 1px solid rgba(117,98,75, .16);
+      border-radius: 8px;
+      background: rgba(245,237,224, .56);
+    }
+
+    .attachment-card.inline-media {
+      grid-template-columns: minmax(0, 1fr);
+      width: min(380px, 100%);
+    }
+
+    .attachment-thumb {
+      width: 48px;
+      height: 48px;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      border: 1px solid rgba(117,98,75, .14);
+      border-radius: 6px;
+      background:
+        repeating-linear-gradient(90deg, rgba(125,143,114,.11) 0 1px, transparent 1px 8px),
+        repeating-linear-gradient(0deg, rgba(192,122,64,.10) 0 1px, transparent 1px 8px),
+        #f8efe2;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 780;
+    }
+
+    .attachment-thumb img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+    }
+
+    .attachment-info {
+      min-width: 0;
+    }
+
+    .attachment-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 760;
+    }
+
+    .attachment-meta {
+      margin-top: 2px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .attachment-card audio,
+    .attachment-card video {
+      width: 100%;
+      max-height: 210px;
+      border-radius: 6px;
+      background: #efe2d0;
+    }
+
+    .remove-attachment {
+      width: 28px;
+      height: 28px;
+      border: 1px solid var(--line-soft);
+      border-radius: 6px;
+      background: rgba(255,250,241, .86);
+      color: var(--muted);
+      line-height: 1;
+    }
+
+    .remove-attachment:hover {
+      color: #8e3838;
+      border-color: rgba(255,107,115,.44);
+    }
+
+    .text-preview {
+      grid-column: 1 / -1;
+      margin-top: 2px;
+      color: var(--soft);
+      font-size: 12px;
+    }
+
+    .text-preview summary {
+      cursor: pointer;
+      color: #8d5b32;
+    }
+
+    .text-preview pre,
+    .debug-pre {
+      max-height: 230px;
+      overflow: auto;
+      margin: 8px 0 0;
+      padding: 10px;
+      border: 1px solid rgba(117,98,75,.16);
+      border-radius: 8px;
+      background: rgba(255,252,247, .70);
+      color: #2c2a26;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font: 12px/1.55 var(--mono);
+    }
+
+    .composer-wrap {
+      padding-block: 12px 18px;
+      background: linear-gradient(180deg, rgba(255,250,241,0), #f6f1e7 22%);
+    }
+
+    .composer {
+      position: relative;
+      border: 1px solid rgba(192,122,64,.24);
+      border-radius: 8px;
+      background:
+        repeating-linear-gradient(90deg, rgba(125,143,114,.035) 0 1px, transparent 1px 18px),
+        rgba(255,250,241, .96);
+      box-shadow: var(--shadow);
+      /* 不裁剪：权限菜单向上弹出时不能被输入框容器边缘切掉（圆角仍由 border-radius 生效） */
+      overflow: visible;
+    }
+
+    .composer.dragging {
+      border-color: rgba(125,143,114,.72);
+      box-shadow: 0 0 0 1px rgba(125,143,114,.40), var(--shadow);
+    }
+
+    .composer-attachments {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 10px 10px 0;
+    }
+
+    .composer-attachments:empty {
+      display: none;
+    }
+
+    .composer textarea {
+      width: 100%;
+      min-height: 86px;
+      max-height: 220px;
+      resize: vertical;
+      border: 0;
+      outline: 0;
+      padding: 13px 13px 9px;
+      background: transparent;
+      color: var(--text);
+    }
+
+    .composer textarea::placeholder {
+      color: #9a8875;
+    }
+
+    .composer-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 0 10px 10px;
+    }
+
+    /* 批准条：等待人工放行时出现在输入框上方 */
+    .approval-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin: 9px 10px 0;
+      padding: 9px 11px;
+      border: 1px solid var(--line-strong);
+      border-radius: 8px;
+      background: rgba(192,122,64,.10);
+    }
+    .approval-text { font-size: 12px; color: var(--text); min-width: 0; }
+    .approval-detail { display: block; color: var(--dim); font: 11px/1.5 var(--mono); margin-top: 2px; word-break: break-all; }
+    .approval-actions { display: flex; gap: 8px; flex: 0 0 auto; }
+    .approval-actions button { min-width: 64px; padding: 0 14px; min-height: 30px; border-radius: 8px; }
+
+    .skilllog { display: grid; gap: 7px; }
+    .skilllog-row {
+      display: grid; gap: 3px; padding: 8px 9px;
+      border: 1px solid var(--line-soft); border-radius: 8px; background: rgba(245,237,224,.42);
+    }
+    .skilllog-meta { font-size: 12px; color: var(--text); }
+    .skilllog-rb { justify-self: start; min-height: 26px; padding: 0 10px; border-radius: 6px; font-size: 11px; margin-top: 3px; }
+
+    /* 权限模式选择器：弱感知的展开式 <details>，默认收起 */
+    .mode-pick { position: relative; margin-left: auto; }
+    .mode-pick > summary {
+      list-style: none; cursor: pointer; user-select: none;
+      display: inline-flex; align-items: center; gap: 4px; line-height: 1;
+      color: var(--soft); font-size: 11px; padding: 5px 9px;
+      border: 1px solid var(--line); border-radius: 7px;
+      background: rgba(245,237,224,.55); transition: border-color .12s, background .12s, color .12s;
+    }
+    .mode-pick > summary::after { content: "▾"; font-size: 9px; color: var(--dim); }
+    .mode-pick[open] > summary { border-color: var(--line-strong); color: var(--weft); background: rgba(192,122,64,.10); }
+    .mode-pick > summary::-webkit-details-marker { display: none; }
+    .mode-pick > summary:hover { color: var(--weft); border-color: var(--line-strong); background: rgba(192,122,64,.10); }
+    .mode-pick #mode-pick-now { margin-left: 2px; color: var(--weft); font-family: var(--mono); }
+    .mode-menu {
+      position: absolute; right: 0; bottom: 130%; z-index: 80;
+      display: grid; gap: 2px; padding: 5px;
+      min-width: 190px;
+      border: 1px solid var(--line); border-radius: 9px;
+      background: var(--panel-solid); box-shadow: var(--shadow);
+    }
+    .mode-menu button {
+      text-align: left; padding: 6px 9px; border-radius: 6px;
+      background: transparent; color: var(--soft); font-size: 12px;
+    }
+    .mode-menu button:hover { background: rgba(192,122,64,.12); color: var(--text); }
+    .mode-menu button[aria-current="true"] { color: var(--weft); font-weight: 700; }
+
+    .composer-left,
+    .composer-right {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* 运行控制（暂停/中止）现已并入 composer-left 一行，与清空历史同行，不再独占一行 */
+    .runtime-controls {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding-left: 8px;
+      margin-left: 4px;
+      border-left: 1px solid rgba(117,98,75,.18);
+    }
+    .runtime-controls.hidden { display: none; }
+    .runtime-controls .secondary,
+    .runtime-controls .danger {
+      min-height: 28px; padding: 0 12px; font-size: 12px; border-radius: 7px;
+    }
+
+    .append-box {
+      min-width: min(420px, 100%);
+      flex: 1 1 360px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .append-box textarea {
+      min-height: 52px;
+      max-height: 130px;
+      padding: 9px 10px;
+      border: 1px solid rgba(117,98,75,.15);
+      border-radius: 7px;
+      background: rgba(245,237,224, .68);
+      color: var(--text);
+      resize: vertical;
+    }
+
+    .hint {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .primary,
+    .secondary,
+    .icon-button,
+    .danger {
+      min-height: 34px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      border-radius: 7px;
+      white-space: nowrap;
+      font-weight: 760;
+    }
+
+    .primary {
+      min-width: 82px;
+      padding: 0 15px;
+      background: var(--warp);
+      color: #fff;
+      box-shadow: 0 10px 28px rgba(125,143,114,.22);
+    }
+
+    .primary:hover {
+      background: #a96836;
+    }
+
+    .secondary,
+    .icon-button {
+      border: 1px solid var(--line-soft);
+      background: rgba(255,250,241, .88);
+      color: var(--soft);
+    }
+
+    .secondary {
+      padding: 0 12px;
+      font-size: 12px;
+    }
+
+    .danger {
+      padding: 0 12px;
+      border: 1px solid rgba(255,107,115,.36);
+      background: rgba(255,107,115,.10);
+      color: #8e3838;
+      font-size: 12px;
+    }
+
+    .danger:hover {
+      background: rgba(255,107,115,.16);
+    }
+
+    .icon-button {
+      width: 36px;
+      padding: 0;
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .pro-rail {
+      min-height: 0;
+      overflow-y: auto;
+      display: grid;
+      align-content: start;
+      gap: 12px;
+      padding: 14px;
+      background: rgba(239,228,212, .76);
+    }
+
+    .surface {
+      border: 1px solid var(--line-soft);
+      border-radius: 8px;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.035), rgba(255,255,255,0)),
+        rgba(255,250,241, .88);
+      padding: 13px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.035);
+    }
+
+    .surface-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .surface-title {
+      margin: 0;
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.25;
+      font-weight: 780;
+    }
+
+    .small {
+      font-size: 12px;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .mono {
+      font-family: var(--mono);
+    }
+
+    .empty-note {
+      border: 1px dashed rgba(117,98,75,.20);
+      border-radius: 8px;
+      padding: 10px;
+      background: rgba(245,237,224, .42);
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .kpi {
+      min-width: 0;
+      padding: 10px;
+      border: 1px solid rgba(117,98,75,.14);
+      border-radius: 8px;
+      background: rgba(245,237,224, .50);
+    }
+
+    .kpi b {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--text);
+      font: 17px/1.2 var(--mono);
+    }
+
+    .kpi span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .graph-list {
+      display: grid;
+      gap: 8px;
+      max-height: 330px;
+      overflow: auto;
+    }
+
+    .graph-node {
+      padding: 9px;
+      border: 1px solid rgba(117,98,75,.14);
+      border-left: 3px solid var(--dim);
+      border-radius: 8px;
+      background: rgba(245,237,224, .48);
+    }
+
+    .graph-node.ok {
+      border-left-color: var(--weft);
+    }
+
+    .graph-node.miss {
+      border-left-color: var(--danger);
+    }
+
+    .graph-node strong {
+      display: block;
+      color: var(--text);
+      font-size: 12px;
+      word-break: break-word;
+    }
+
+    .graph-node code {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+      font: 11px/1.45 var(--mono);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .report-frame {
+      width: 100%;
+      height: 360px;
+      display: block;
+      border: 1px solid rgba(117,98,75,.16);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .debug-drawer {
+      border: 1px solid var(--line-soft);
+      border-radius: 8px;
+      background: rgba(255,250,241, .88);
+      overflow: hidden;
+    }
+
+    .debug-drawer summary {
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 0 13px;
+      cursor: pointer;
+      color: var(--text);
+      font-weight: 780;
+      list-style: none;
+    }
+
+    .debug-drawer summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .debug-content {
+      padding: 0 13px 13px;
+    }
+
+    .debug-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .debug-table-wrap {
+      overflow: auto;
+      border: 1px solid rgba(117,98,75,.15);
+      border-radius: 8px;
+    }
+
+    .debug-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 620px;
+      font: 11px/1.45 var(--mono);
+    }
+
+    .debug-table th,
+    .debug-table td {
+      padding: 7px 8px;
+      border-bottom: 1px solid rgba(117,98,75,.12);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .debug-table th {
+      color: var(--weft);
+      background: rgba(245,237,224, .62);
+    }
+
+    .debug-table .num {
+      text-align: right;
+    }
+
+    .confirm-history {
+      display: grid;
+      gap: 8px;
+      max-height: 310px;
+      overflow: auto;
+    }
+
+    .history-item {
+      padding: 9px;
+      border: 1px solid rgba(117,98,75,.14);
+      border-radius: 8px;
+      background: rgba(245,237,224, .46);
+    }
+
+    .history-item.awaiting {
+      border-color: rgba(192,122,64,.42);
+      background: rgba(192,122,64,.08);
+    }
+
+    .history-item.answered {
+      border-color: rgba(125,143,114,.32);
+    }
+
+    .history-item strong {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--text);
+      font-size: 12px;
+    }
+
+    .history-item ul,
+    .clarify-questions ul {
+      margin: 7px 0 0;
+      padding-left: 18px;
+      color: var(--soft);
+    }
+
+    .history-answer {
+      margin-top: 8px;
+      color: #8d5b32;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .floating-window {
+      position: fixed;
+      z-index: 70;
+      border: 1px solid rgba(192,122,64,.38);
+      border-radius: 8px;
+      background:
+        repeating-linear-gradient(90deg, rgba(125,143,114,.04) 0 1px, transparent 1px 16px),
+        rgba(15, 19, 31, .98);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .clarify-window {
+      right: 24px;
+      top: 96px;
+      width: min(430px, calc(100vw - 28px));
+      max-height: calc(100vh - 118px);
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+    }
+
+    .window-handle {
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 0 13px;
+      border-bottom: 1px solid rgba(117,98,75,.14);
+      background: rgba(245,237,224, .62);
+      cursor: move;
+      touch-action: none;
+      user-select: none;
+    }
+
+    .window-title {
+      margin: 0;
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 780;
+    }
+
+    .clarify-body {
+      min-height: 0;
+      overflow: auto;
+      display: grid;
+      gap: 12px;
+      padding: 13px;
+    }
+
+    .clarify-body textarea,
+    .clarify-body input {
+      width: 100%;
+      border: 1px solid rgba(117,98,75,.16);
+      border-radius: 8px;
+      background: rgba(255,252,247, .70);
+      color: var(--text);
+    }
+
+    .clarify-body textarea {
+      min-height: 96px;
+      resize: vertical;
+      padding: 10px;
+    }
+
+    .clarify-body input {
+      min-height: 36px;
+      padding: 0 10px;
+    }
+
+    .clarify-actions,
+    .followup-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .followups {
+      display: grid;
+      gap: 8px;
+    }
+
+    .followup-item {
+      padding: 8px;
+      border: 1px solid rgba(117,98,75,.13);
+      border-radius: 8px;
+      background: rgba(245,237,224, .42);
+      color: var(--soft);
+      font-size: 12px;
+    }
+
+    .phone-window {
+      position: fixed;
+      z-index: 60;
+      right: 28px;
+      bottom: 24px;
+      width: min(370px, calc(100vw - 28px));
+      user-select: none;
+    }
+
+    .phone-shell {
+      position: relative;
+      padding: 11px;
+      border-radius: 34px;
+      background:
+        linear-gradient(145deg, #5b5046, #332d28 48%, #756a5f);
+      box-shadow: 0 28px 90px rgba(0,0,0,.56), inset 0 0 0 1px rgba(255,255,255,.13);
+    }
+
+    .phone-shell::before,
+    .phone-shell::after {
+      content: "";
+      position: absolute;
+      width: 3px;
+      border-radius: 999px;
+      background: #70645a;
+      left: -2px;
+    }
+
+    .phone-shell::before {
+      top: 90px;
+      height: 44px;
+    }
+
+    .phone-shell::after {
+      top: 148px;
+      height: 66px;
+    }
+
+    .phone-handle {
+      min-height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: move;
+      touch-action: none;
+      user-select: none;
+    }
+
+    .speaker {
+      width: 64px;
+      height: 5px;
+      border-radius: 999px;
+      background: #070911;
+      box-shadow: inset 0 1px 2px rgba(255,255,255,.18);
+    }
+
+    .phone-screen {
+      height: min(680px, calc(100vh - 116px));
+      min-height: 480px;
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      border-radius: 25px;
+      border: 1px solid rgba(255,255,255,.08);
+      background:
+        repeating-linear-gradient(90deg, rgba(125,143,114,.045) 0 1px, transparent 1px 18px),
+        repeating-linear-gradient(0deg, rgba(192,122,64,.038) 0 1px, transparent 1px 18px),
+        #f6f1e7;
+    }
+
+    .phone-top {
+      padding: 12px 13px 9px;
+      border-bottom: 1px solid rgba(117,98,75,.13);
+      background: rgba(245,237,224, .72);
+    }
+
+    .phone-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 780;
+    }
+
+    .phone-badge {
+      margin-top: 8px;
+      display: inline-flex;
+      min-height: 25px;
+      align-items: center;
+      padding: 0 8px;
+      border: 1px solid rgba(192,122,64,.38);
+      border-radius: 999px;
+      color: #7a4523;
+      background: rgba(192,122,64,.10);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .phone-thread {
+      min-height: 0;
+      overflow-y: auto;
+      padding: 12px;
+      display: grid;
+      align-content: start;
+      gap: 10px;
+    }
+
+    .phone-thread .message {
+      grid-template-columns: 28px minmax(0, 1fr);
+      gap: 7px;
+    }
+
+    .phone-thread .message.user {
+      grid-template-columns: minmax(0, 1fr) 28px;
+    }
+
+    .phone-thread .avatar-img {
+      width: 28px;
+      height: 28px;
+    }
+
+    .phone-thread .bubble {
+      max-width: 245px;
+      padding: 8px 9px;
+      font-size: 12px;
+      box-shadow: none;
+    }
+
+    .phone-thread .role-line,
+    .phone-thread .bubble-meta,
+    .phone-thread .attachment-meta,
+    .phone-thread .text-preview {
+      font-size: 10px;
+    }
+
+    .phone-thread .attachment-card {
+      grid-template-columns: 38px minmax(0, 1fr);
+      padding: 5px;
+    }
+
+    .phone-thread .remove-attachment {
+      display: none;
+    }
+
+    .phone-thread .attachment-thumb {
+      width: 38px;
+      height: 38px;
+    }
+
+    .topbar,
+    .relay-panel,
+    .phone-top {
+      border-color: rgba(117,98,75,.16);
+      background: rgba(255,250,241,.88);
+      backdrop-filter: blur(18px);
+    }
+
+    .brand-mark {
+      border-color: rgba(192,122,64,.34);
+      background:
+        repeating-linear-gradient(90deg, rgba(125,143,114,.18) 0 1px, transparent 1px 7px),
+        repeating-linear-gradient(0deg, rgba(192,122,64,.16) 0 1px, transparent 1px 7px),
+        #fff7eb;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.64), 0 10px 24px rgba(111,78,42,.10);
+    }
+
+    .brand-mark img {
+      filter: drop-shadow(0 6px 10px rgba(111,78,42,.12));
+    }
+
+    .brand-title,
+    .loom-context h2,
+    .surface-title,
+    .window-title,
+    .phone-title,
+    .attachment-name,
+    .graph-node strong,
+    .history-item strong,
+    .debug-drawer summary {
+      color: var(--text);
+    }
+
+    .chip,
+    .ghost-link,
+    .ghost-button,
+    .segmented,
+    .secondary,
+    .icon-button,
+    .remove-attachment {
+      border-color: rgba(117,98,75,.18);
+      background: rgba(255,250,241,.86);
+      color: var(--soft);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.68), 0 8px 20px rgba(111,78,42,.06);
+    }
+
+    .chip[data-tone="running"] {
+      border-color: rgba(125,143,114,.42);
+      background: rgba(125,143,114,.14);
+      color: #47533e;
+    }
+
+    .chip[data-tone="done"] {
+      border-color: rgba(192,122,64,.46);
+      background: rgba(192,122,64,.12);
+      color: #7a4523;
+    }
+
+    .chip[data-tone="failed"],
+    .danger {
+      border-color: rgba(184,87,87,.36);
+      background: rgba(184,87,87,.10);
+      color: #8e3838;
+    }
+
+    .ghost-button[aria-pressed="true"],
+    body[data-mode="normal"] .mode-normal,
+    body[data-mode="pro"] .mode-pro {
+      border-color: rgba(192,122,64,.48);
+      background: var(--weft);
+      color: #fffaf1;
+      box-shadow: 0 8px 18px rgba(192,122,64,.20);
+    }
+
+    .ghost-link:hover,
+    .ghost-button:hover,
+    .secondary:hover,
+    .icon-button:hover {
+      border-color: rgba(192,122,64,.38);
+      background: #fff7eb;
+    }
+
+    .loom-shell {
+      border-top-color: rgba(117,98,75,.10);
+    }
+
+    .workbench {
+      border-right-color: rgba(117,98,75,.15);
+    }
+
+    .loom-context {
+      border-bottom-color: rgba(117,98,75,.16);
+      background:
+        linear-gradient(90deg, rgba(125,143,114,.12), transparent 46%),
+        linear-gradient(180deg, rgba(255,255,255,.52), rgba(255,255,255,0));
+    }
+
+    .relay-avatar,
+    .avatar-img {
+      border-color: rgba(117,98,75,.18);
+      background: #fff7eb;
+      box-shadow: 0 0 0 3px rgba(192,122,64,.08);
+    }
+
+    .avatar-img {
+      display: block;
+      overflow: hidden;
+    }
+
+    .relay-avatar {
+      display: block;
+      overflow: hidden;
+    }
+
+    .avatar-img svg,
+    .avatar-img img,
+    .relay-avatar svg,
+    .relay-avatar img {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .relay-node.active .relay-avatar {
+      border-color: rgba(192,122,64,.68);
+      box-shadow: 0 0 0 4px rgba(192,122,64,.16), 0 12px 24px rgba(111,78,42,.12);
+    }
+
+    .relay-node.done .relay-role,
+    .history-answer,
+    .text-preview summary {
+      color: #8d5b32;
+    }
+
+    .relay-edge::before,
+    .relay-edge::after {
+      background-color: rgba(117,98,75,.20);
+    }
+
+    .relay-edge::before {
+      background-image: repeating-linear-gradient(90deg, rgba(125,143,114,.56) 0 7px, transparent 7px 13px);
+    }
+
+    .relay-edge::after {
+      background-image: repeating-linear-gradient(90deg, rgba(192,122,64,.48) 0 5px, transparent 5px 12px);
+    }
+
+    .relay-edge.done::before {
+      background-color: rgba(125,143,114,.44);
+      box-shadow: 0 0 16px rgba(125,143,114,.16);
+    }
+
+    .relay-edge.done::after,
+    .relay-baton {
+      background-color: rgba(192,122,64,.48);
+      box-shadow: 0 0 18px rgba(192,122,64,.16);
+    }
+
+    .relay-note {
+      border-color: rgba(192,122,64,.30);
+      background: #fffaf1;
+      color: var(--soft);
+      box-shadow: 0 10px 24px rgba(111,78,42,.10);
+    }
+
+    .result-strip,
+    .composer-wrap {
+      border-color: rgba(117,98,75,.16);
+      background:
+        linear-gradient(90deg, rgba(192,122,64,.09), transparent 42%),
+        rgba(255,250,241,.74);
+    }
+
+    .thread {
+      background: rgba(246,241,231,.28);
+    }
+
+    .bubble,
+    .surface,
+    .debug-drawer,
+    .floating-window {
+      border-color: rgba(117,98,75,.18);
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.55), rgba(255,255,255,0)),
+        rgba(255,250,241,.92);
+      box-shadow: var(--shadow);
+    }
+
+    .message.user .bubble {
+      border-color: rgba(125,143,114,.38);
+      background:
+        linear-gradient(135deg, rgba(125,143,114,.16), rgba(125,143,114,.05)),
+        rgba(250,246,236,.96);
+    }
+
+    .message.agent .bubble {
+      border-left-color: rgba(192,122,64,.52);
+    }
+
+    .message.failed .bubble {
+      border-color: rgba(184,87,87,.35);
+      background: rgba(255,244,241,.90);
+    }
+
+    .message.handoff .bubble {
+      border-color: rgba(125,143,114,.28);
+      border-left-color: rgba(192,122,64,.48);
+      background:
+        repeating-linear-gradient(90deg, rgba(125,143,114,.055) 0 1px, transparent 1px 16px),
+        rgba(255,250,241,.94);
+    }
+
+    .message.confirm .bubble,
+    .message.clarify-answer .bubble,
+    .message.clarify-followup .bubble {
+      border-color: rgba(192,122,64,.36);
+      background: rgba(255,247,235,.92);
+    }
+
+    .handoff-route {
+      color: #526642;
+    }
+
+    .tech {
+      color: #5d724d;
+    }
+
+    .message-link,
+    .result-link {
+      border-color: rgba(125,143,114,.36);
+      background: rgba(125,143,114,.13);
+      color: #465b3c;
+    }
+
+    .attachment-card,
+    .kpi,
+    .graph-node,
+    .history-item,
+    .followup-item {
+      border-color: rgba(117,98,75,.16);
+      background: rgba(255,250,241,.72);
+    }
+
+    .attachment-thumb {
+      border-color: rgba(117,98,75,.14);
+      background:
+        repeating-linear-gradient(90deg, rgba(125,143,114,.10) 0 1px, transparent 1px 8px),
+        repeating-linear-gradient(0deg, rgba(192,122,64,.09) 0 1px, transparent 1px 8px),
+        #f8efe2;
+    }
+
+    .attachment-card audio,
+    .attachment-card video {
+      background: #efe2d0;
+    }
+
+    .text-preview pre,
+    .debug-pre {
+      border-color: rgba(117,98,75,.16);
+      background: rgba(255,252,247,.82);
+      color: var(--text);
+    }
+
+    .composer {
+      border-color: rgba(192,122,64,.28);
+      background:
+        repeating-linear-gradient(90deg, rgba(125,143,114,.045) 0 1px, transparent 1px 18px),
+        rgba(255,250,241,.96);
+      box-shadow: var(--shadow);
+    }
+
+    .composer.dragging {
+      border-color: rgba(125,143,114,.64);
+      box-shadow: 0 0 0 1px rgba(125,143,114,.28), var(--shadow);
+    }
+
+    .composer textarea,
+    .append-box textarea,
+    .clarify-body textarea,
+    .clarify-body input {
+      background: rgba(255,252,247,.76);
+      color: var(--text);
+      border-color: rgba(117,98,75,.16);
+    }
+
+    .composer textarea::placeholder,
+    .phone-input::placeholder {
+      color: #9a8875;
+    }
+
+    .window-handle {
+      border-color: rgba(117,98,75,.14);
+      background: rgba(245,237,224,.60);
+    }
+
+    .primary {
+      background: var(--weft);
+      color: #fffaf1;
+      box-shadow: 0 12px 24px rgba(192,122,64,.22);
+    }
+
+    .primary:hover {
+      background: #a96836;
+    }
+
+    .danger:hover {
+      background: rgba(184,87,87,.15);
+    }
+
+    .pro-rail {
+      background: rgba(239,228,212,.56);
+    }
+
+    .empty-note {
+      border-color: rgba(117,98,75,.22);
+      background: rgba(255,250,241,.62);
+    }
+
+    .graph-node.ok {
+      border-left-color: var(--success);
+    }
+
+    .graph-node.miss {
+      border-left-color: var(--danger);
+    }
+
+    .report-frame {
+      border-color: rgba(117,98,75,.16);
+      background: #fffdf8;
+    }
+
+    .debug-table-wrap {
+      border-color: rgba(117,98,75,.16);
+    }
+
+    .debug-table td {
+      border-bottom-color: rgba(117,98,75,.12);
+    }
+
+    .debug-table th {
+      color: #7a4523;
+      background: rgba(245,237,224,.78);
+    }
+
+    .history-item.awaiting {
+      border-color: rgba(192,122,64,.34);
+      background: rgba(192,122,64,.09);
+    }
+
+    .history-item.answered {
+      border-color: rgba(125,143,114,.30);
+    }
+
+    .phone-shell {
+      background:
+        linear-gradient(145deg, #5b5046, #332d28 48%, #756a5f);
+      box-shadow: 0 26px 70px rgba(111,78,42,.24), inset 0 0 0 1px rgba(255,255,255,.22);
+    }
+
+    .phone-shell::before,
+    .phone-shell::after {
+      background: #70645a;
+    }
+
+    .speaker {
+      background: #2f2925;
+      box-shadow: inset 0 1px 2px rgba(255,255,255,.24);
+    }
+
+    .phone-screen {
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      border-color: rgba(255,255,255,.18);
+      background:
+        repeating-linear-gradient(90deg, rgba(125,143,114,.055) 0 1px, transparent 1px 18px),
+        repeating-linear-gradient(0deg, rgba(192,122,64,.045) 0 1px, transparent 1px 18px),
+        #f6f1e7;
+    }
+
+    .phone-badge {
+      border-color: rgba(192,122,64,.34);
+      color: #7a4523;
+      background: rgba(192,122,64,.10);
+    }
+
+    .phone-composer-wrap {
+      position: relative;
+      padding: 8px;
+      border-top: 1px solid rgba(117,98,75,.16);
+      background: rgba(255,250,241,.92);
+    }
+
+    .phone-attach-panel {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .phone-attach-panel.hidden {
+      display: none;
+    }
+
+    .phone-mode-block {
+      grid-column: 1 / -1;
+      margin-top: 2px;
+      padding-top: 7px;
+      border-top: 1px solid rgba(117,98,75,.14);
+    }
+    .phone-mode-title { display: block; font-size: 11px; color: var(--dim); margin-bottom: 5px; }
+    .phone-mode-title b { color: var(--weft); }
+    .phone-mode-menu { display: grid; gap: 4px; }
+    .phone-mode-menu button {
+      text-align: left; padding: 7px 9px; border-radius: 7px; font-size: 12px;
+      border: 1px solid rgba(117,98,75,.16); background: #fffaf1; color: var(--soft);
+    }
+    .phone-mode-menu button[aria-current="true"] { color: var(--weft); border-color: var(--line-strong); font-weight: 700; }
+
+    .phone-approval {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      margin-bottom: 7px; padding: 7px 9px; border-radius: 8px;
+      background: rgba(192,122,64,.12); border: 1px solid var(--line-strong);
+      font-size: 12px; color: var(--text);
+    }
+    .phone-approval.hidden { display: none; }
+    .phone-approval-actions { display: flex; gap: 6px; flex: 0 0 auto; }
+    .phone-approval-actions button {
+      min-height: 26px; padding: 0 11px; border-radius: 6px; font-size: 12px; font-weight: 700;
+      border: 1px solid var(--line-strong); background: #fffaf1; color: var(--weft);
+    }
+
+    .phone-attach-option,
+    .phone-tool-button,
+    .phone-send {
+      min-height: 34px;
+      border: 1px solid rgba(117,98,75,.18);
+      border-radius: 8px;
+      background: #fffaf1;
+      color: var(--soft);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.62);
+    }
+
+    .phone-attach-option {
+      font-size: 12px;
+      font-weight: 740;
+    }
+
+    .phone-mic {
+      display: inline-grid;
+      place-items: center;
+      padding: 0;
+    }
+
+    .phone-mic.is-recording {
+      background: var(--weft);
+      border-color: var(--weft);
+      color: #fffaf1;
+      box-shadow: 0 0 0 4px rgba(192,122,64,.18);
+    }
+
+    /* press-and-hold pulse while recording */
+    .phone-mic.is-recording svg {
+      animation: micPulse 1s ease-in-out infinite;
+    }
+
+    @keyframes micPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: .45; }
+    }
+
+    /* 边角缩放手柄：抓住手机【左上角】往外拖放大、往内拖缩小（像调窗口大小）。
+       支点是 transform-origin: bottom right（右下角固定、往视口内长不出屏），所以会
+       动的角是【左上角】——手柄放在这里才跟手。手柄在 shell 内部，随 shell 一起缩放
+       从而始终贴住左上视觉角；再反向 scale 抵消，让手柄本身视觉大小恒定。 */
+    .phone-resize {
+      position: absolute;
+      top: -3px;
+      left: -3px;
+      z-index: 5;
+      width: 26px;
+      height: 26px;
+      cursor: nwse-resize;
+      touch-action: none;
+      border-top: 3px solid rgba(192,122,64,.9);
+      border-left: 3px solid rgba(192,122,64,.9);
+      border-top-left-radius: 12px;
+      opacity: .6;
+      transform: scale(calc(1 / var(--phone-scale, 1)));
+      transform-origin: top left;
+      transition: opacity .14s ease;
+    }
+
+    .phone-resize:hover,
+    .phone-resize:focus-visible,
+    .phone-resize.dragging {
+      opacity: 1;
+      outline: none;
+    }
+
+    .phone-shell {
+      transform: scale(var(--phone-scale, 1));
+      transform-origin: bottom right;
+      transition: transform .14s ease;
+    }
+
+    .phone-composer {
+      display: grid;
+      grid-template-columns: 34px 34px minmax(0, 1fr) 42px;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .phone-input {
+      width: 100%;
+      min-width: 0;
+      height: 34px;
+      border: 1px solid rgba(117,98,75,.18);
+      border-radius: 8px;
+      padding: 0 10px;
+      background: rgba(255,252,247,.92);
+      color: var(--text);
+      outline: 0;
+    }
+
+    .phone-input.recording {
+      border-color: rgba(192,122,64,.55);
+      background: rgba(255,239,219,.94);
+    }
+
+    .phone-send {
+      background: var(--weft);
+      color: #fffaf1;
+      font-weight: 780;
+    }
+
+    .phone-send:disabled,
+    .phone-tool-button:disabled {
+      opacity: .48;
+      cursor: not-allowed;
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(12px);
+      animation: reveal .68s cubic-bezier(.2,.72,.2,1) forwards;
+      animation-delay: var(--delay, 0ms);
+    }
+
+    @keyframes reveal {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes batonTravel {
+      0% {
+        left: 0;
+        opacity: 0;
+      }
+      13% {
+        opacity: 1;
+      }
+      86% {
+        opacity: 1;
+      }
+      100% {
+        left: calc(100% - 10px);
+        opacity: 0;
+      }
+    }
+
+    @keyframes relayNote {
+      0% {
+        left: 0;
+        opacity: 0;
+        transform: translateY(2px);
+      }
+      14% {
+        opacity: 1;
+      }
+      82% {
+        opacity: 1;
+      }
+      100% {
+        left: calc(100% - 16px);
+        opacity: 0;
+        transform: translateY(0);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: .001ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: .001ms !important;
+      }
+
+      .reveal {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    @media (max-width: 980px) {
+      body {
+        overflow: auto;
+      }
+
+      .app {
+        min-height: 100vh;
+        height: auto;
+      }
+
+      .topbar,
+      .loom-context,
+      .result-strip {
+        align-items: start;
+        grid-template-columns: 1fr;
+      }
+
+      .topbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .top-actions {
+        justify-content: flex-start;
+      }
+
+      .loom-shell {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;   /* stacked layout scrolls at the page level */
+        overflow: visible;
+      }
+
+      .workbench {
+        min-height: 840px;
+        border-right: 0;
+      }
+
+      .pro-rail {
+        border-top: 1px solid var(--line-soft);
+      }
+
+      .thread {
+        padding: 16px;
+      }
+
+      .composer-wrap {
+        padding: 10px 16px 16px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .loom-context,
+      .relay-panel,
+      .result-strip {
+        padding-left: 14px;
+        padding-right: 14px;
+      }
+
+      .loom-context h2 {
+        font-size: 24px;
+      }
+
+      .message,
+      .message.user {
+        grid-template-columns: 32px minmax(0, 1fr);
+      }
+
+      .message.user .avatar-img {
+        grid-column: 1;
+      }
+
+      .message.user .bubble {
+        grid-column: 2;
+        justify-self: start;
+      }
+
+      .avatar-img {
+        width: 32px;
+        height: 32px;
+      }
+
+      .bubble {
+        max-width: 100%;
+      }
+
+      .clarify-window {
+        top: 82px;
+        left: 14px;
+        right: auto;
+        width: calc(100vw - 28px);
+      }
+
+      .phone-window {
+        left: 14px;
+        right: auto;
+        width: calc(100vw - 28px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar reveal" style="--delay: 0ms">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <img src="/assets/icon.png" alt="">
+        </div>
+        <div class="brand-copy">
+          <h1 class="brand-title"><span>StackWeft</span></h1>
+          <p class="brand-subtitle">把需求交付为可验证的 PR · Agent 协作</p>
+        </div>
+      </div>
+      <div class="top-actions">
+        <a class="ghost-link pro-only" href="/learn" target="_blank" rel="noreferrer">复用加速曲线</a>
+        <button id="phone-toggle" class="ghost-button" type="button" aria-pressed="false">手机模式</button>
+        <span id="global-state" class="chip">未开始</span>
+        <div class="segmented" role="group" aria-label="模式切换">
+          <button id="mode-normal" class="mode-normal" type="button">普通</button>
+          <button id="mode-pro" class="mode-pro" type="button">Pro</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="loom-shell">
+      <section class="workbench" aria-label="StackWeft 对话工作台">
+        <section class="loom-context reveal" style="--delay: 70ms">
+          <div>
+            <span class="eyebrow">需求对接</span>
+            <h2>说说你想做的改动</h2>
+            <p>把目标、限制和验收标准讲清楚就好；截图、日志、文档都能和文字一起发过来。</p>
+          </div>
+          <div class="run-meta">
+            <span id="run-chip" class="chip run-id">WeftRun：未创建</span>
+            <span id="branch-chip" class="chip">分支：待创建</span>
+          </div>
+        </section>
+
+        <div class="reveal" style="--delay: 120ms">
+          <section id="relay-panel" class="relay-panel" aria-label="Agent 交接">
+            <div class="relay-head">
+              <span class="eyebrow">Agent 交接</span>
+              <span id="relay-caption" class="relay-caption">等你发来需求，我就开始。</span>
+            </div>
+            <div id="relay-track" class="relay-track"></div>
+          </section>
+
+          <section class="result-strip" aria-label="交付结果">
+            <div>
+              <h2 class="result-title">交付结果</h2>
+              <div id="result-text" class="result-text">做完之后，这里会给你验证结果、分支和报告。</div>
+            </div>
+            <div id="result-actions" class="result-actions"></div>
+          </section>
+        </div>
+
+        <section class="chat-zone reveal" style="--delay: 170ms">
+          <div id="thread" class="thread" aria-live="polite" aria-atomic="false">
+            <div id="thread-inner" class="thread-inner"></div>
+          </div>
+
+          <div class="composer-wrap">
+            <section id="composer" class="composer" aria-label="需求输入">
+              <div id="approval-bar" class="approval-bar hidden" role="alert">
+                <div class="approval-text">需要你批准：<span id="approval-label"></span><span id="approval-detail" class="approval-detail"></span></div>
+                <div class="approval-actions">
+                  <button id="approve-btn" class="primary" type="button">批准</button>
+                  <button id="deny-btn" class="danger" type="button">拒绝</button>
+                </div>
+              </div>
+              <div id="composer-attachments" class="composer-attachments"></div>
+              <label class="sr-only" for="requirement">需求内容</label>
+              <textarea id="requirement" placeholder="说说你想做的改动，比如目标和验收标准；可以粘贴截图、日志，或把文件拖进来。"></textarea>
+              <div class="composer-actions">
+                <div class="composer-left">
+                  <button id="add-file" class="icon-button" type="button" title="加入附件" aria-label="加入附件">+</button>
+                  <input id="files" class="hidden" type="file" multiple accept="image/*,audio/*,video/*,text/*,.md,.txt,.json,.js,.jsx,.ts,.tsx,.css,.html,.py,.csv,.yml,.yaml,.pdf">
+                  <span id="composer-hint" class="hint">0 个附件</span>
+                  <button id="clear-history" class="ghost-button" type="button" title="清空对话显示，不影响正在进行的交付">清空历史</button>
+                  <details id="mode-pick" class="mode-pick">
+                    <summary title="执行权限模式">权限<span id="mode-pick-now"></span></summary>
+                    <div class="mode-menu">
+                      <button type="button" data-mode="allow-all">全自动 · 默认</button>
+                      <button type="button" data-mode="auto">按角色放行</button>
+                      <button type="button" data-mode="allow-edit">改动放行 · 命令需批准</button>
+                      <button type="button" data-mode="always-ask">每步都问</button>
+                    </div>
+                  </details>
+                  <span id="runtime-controls" class="runtime-controls hidden" aria-label="运行控制">
+                    <button id="pause-resume" class="secondary" type="button">暂停</button>
+                    <button id="abort-run" class="danger" type="button">中止</button>
+                  </span>
+                </div>
+                <div class="composer-right">
+                  <span id="composer-state" class="hint">随时可以开始。</span>
+                  <button id="send" class="primary" type="button">发送</button>
+                </div>
+              </div>
+            </section>
+          </div>
+        </section>
+      </section>
+
+      <aside class="pro-rail pro-only reveal" style="--delay: 210ms" aria-label="Pro 技术信息">
+        <section class="surface" aria-labelledby="confirm-history-title">
+          <div class="surface-head">
+            <h2 id="confirm-history-title" class="surface-title">确认点历史</h2>
+            <span id="confirm-count" class="chip">0 轮</span>
+          </div>
+          <div id="confirm-history" class="confirm-history"></div>
+        </section>
+
+        <section class="surface" aria-labelledby="skilllog-title">
+          <div class="surface-head">
+            <h2 id="skilllog-title" class="surface-title">Skill 版本与回滚</h2>
+            <span id="skilllog-state" class="small muted">—</span>
+          </div>
+          <div id="skilllog" class="skilllog"></div>
+        </section>
+
+        <section class="surface" aria-labelledby="token-title">
+          <div class="surface-head">
+            <h2 id="token-title" class="surface-title">Token / Cost</h2>
+            <button id="refresh-debug-top" class="secondary" type="button">刷新</button>
+          </div>
+          <div id="token-kpis" class="kpi-grid"></div>
+        </section>
+
+        <section class="surface" aria-labelledby="graph-title">
+          <div class="surface-head">
+            <h2 id="graph-title" class="surface-title">WeftGraph 技术面板</h2>
+            <span id="graph-state" class="small muted">等待运行</span>
+          </div>
+          <div id="weftgraph" class="graph-list"></div>
+        </section>
+
+        <section class="surface" aria-labelledby="report-title">
+          <div class="surface-head">
+            <h2 id="report-title" class="surface-title">Commit Diff Report</h2>
+            <span id="report-state" class="small muted">等待运行</span>
+          </div>
+          <div id="report-empty" class="empty-note">创建 WeftRun 后加载 /api/report。</div>
+          <iframe id="report-frame" class="report-frame hidden" title="StackWeft commit diff report"></iframe>
+        </section>
+
+        <details id="debug-drawer" class="debug-drawer">
+          <summary>
+            <span>调试抽屉</span>
+            <span id="debug-state" class="small muted">等待运行</span>
+          </summary>
+          <div class="debug-content">
+            <div class="debug-actions">
+              <span class="small muted">GET /api/debug?id=</span>
+              <button id="refresh-debug" class="secondary" type="button">刷新</button>
+            </div>
+            <div id="debug-content"></div>
+          </div>
+        </details>
+      </aside>
+    </main>
+  </div>
+
+  <section id="clarify-window" class="floating-window clarify-window hidden" aria-labelledby="clarify-title">
+    <div class="window-handle" data-drag-handle>
+      <h2 id="clarify-title" class="window-title">确认点</h2>
+      <span id="clarify-run" class="chip">等待运行</span>
+    </div>
+    <div class="clarify-body">
+      <div id="clarify-questions" class="clarify-questions"></div>
+      <div>
+        <label class="small muted" for="clarify-answer">确认答复</label>
+        <textarea id="clarify-answer" placeholder="写下最终选择、范围边界或验收口径。"></textarea>
+      </div>
+      <div class="clarify-actions">
+        <button id="clarify-submit" class="primary" type="button">提交确认</button>
+      </div>
+      <div>
+        <label class="small muted" for="clarify-ask-input">追问确认点</label>
+        <input id="clarify-ask-input" type="text" placeholder="对术语、影响范围或风险继续追问">
+      </div>
+      <div class="followup-actions">
+        <button id="clarify-ask" class="secondary" type="button">发送追问</button>
+      </div>
+      <div id="clarify-followups" class="followups"></div>
+      <div id="clarify-error" class="small muted" role="status"></div>
+    </div>
+  </section>
+
+  <section id="skill-window" class="floating-window clarify-window hidden" aria-labelledby="skill-title">
+    <div class="window-handle" data-drag-handle>
+      <h2 id="skill-title" class="window-title">Skill 变更待审</h2>
+      <span id="skill-count" class="chip">0</span>
+    </div>
+    <div class="clarify-body">
+      <p class="small muted">AI 起草/修改了 Skill（或你请求新增）。审核后批准生效、否决丢弃，或稍后处理。变更会进版本历史、可回滚。</p>
+      <div id="skill-list" class="followups"></div>
+      <div class="followup-actions">
+        <button id="skill-later" class="secondary" type="button">稍后</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="phone-window" class="phone-window hidden" aria-label="手机模式预览">
+    <div class="phone-shell">
+      <div id="phone-resize" class="phone-resize" data-resize-handle role="slider"
+           aria-label="拖拽左上角缩放手机" aria-valuemin="70" aria-valuemax="160" aria-valuenow="100" tabindex="0"
+           title="拖拽缩放"></div>
+      <div class="phone-handle" data-drag-handle>
+        <span class="speaker" aria-hidden="true"></span>
+      </div>
+      <div class="phone-screen">
+        <div class="phone-top">
+          <div class="phone-title">
+            <span>StackWeft</span>
+            <span id="phone-state" class="small muted">未开始</span>
+          </div>
+          <div class="phone-badge">OneBot · 飞书/微信</div>
+        </div>
+        <div id="phone-thread" class="phone-thread" aria-live="polite"></div>
+        <div class="phone-composer-wrap">
+          <div id="phone-attach-panel" class="phone-attach-panel hidden" aria-label="附件选项">
+            <button class="phone-attach-option" type="button" data-phone-attach="photo">照片</button>
+            <button class="phone-attach-option" type="button" data-phone-attach="file">文件</button>
+            <button class="phone-attach-option" type="button" data-phone-attach="audio">语音</button>
+            <button class="phone-attach-option" type="button" data-phone-attach="video">视频</button>
+            <div class="phone-mode-block">
+              <span class="phone-mode-title">权限模式 · 当前 <b id="phone-mode-now">全自动</b></span>
+              <div id="phone-mode-menu" class="phone-mode-menu">
+                <button type="button" data-mode="allow-all">全自动 · 默认</button>
+                <button type="button" data-mode="auto">按角色放行</button>
+                <button type="button" data-mode="allow-edit">改动放行 · 命令需批准</button>
+                <button type="button" data-mode="always-ask">每步都问</button>
+              </div>
+            </div>
+          </div>
+          <div id="phone-approval" class="phone-approval hidden" role="alert">
+            <span class="phone-approval-text">需要批准：<b id="phone-approval-label"></b></span>
+            <span class="phone-approval-actions">
+              <button id="phone-approve" type="button">批准</button>
+              <button id="phone-deny" type="button">拒绝</button>
+            </span>
+          </div>
+          <div class="phone-composer" aria-label="手机消息输入">
+            <button id="phone-plus" class="phone-tool-button" type="button" aria-expanded="false" aria-controls="phone-attach-panel">＋</button>
+            <button id="phone-mic" class="phone-tool-button phone-mic" type="button" aria-label="按住说话" title="按住说话">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0"></path><line x1="12" y1="18" x2="12" y2="21"></line>
+              </svg>
+            </button>
+            <input id="phone-input" class="phone-input" type="text" placeholder="发消息…">
+            <button id="phone-send" class="phone-send" type="button">发送</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Offline avatar engine (DiceBear "thumbs") — defines window.StackWeftAvatar -->
+  <script src="/assets/avatar.js"></script>
+  <script>
+    "use strict";
+
+    const STORAGE_SESSION = "stackweft_session_v6";
+    const STORAGE_MODE = "stackweft_mode";
+    const STORAGE_PHONE = "stackweft_phone_mode";
+    const STORAGE_PHONE_SCALE = "stackweft_phone_scale";
+    const PHONE_SCALE_MIN = 0.7, PHONE_SCALE_MAX = 1.6, PHONE_SCALE_STEP = 0.08;
+    const PHONE_RESIZE_REF = 320;  // px of diagonal drag ≈ full scale-range sweep
+    const MAX_TEXT_READ = 200000;
+    const POLL_MS = 2000;
+    const DEFAULT_FILE_ACCEPT = "image/*,audio/*,video/*,text/*,.md,.txt,.json,.js,.jsx,.ts,.tsx,.css,.html,.py,.csv,.yml,.yaml,.pdf";
+    const TEXTY = /^(text\/|application\/(json|javascript|xml|x-yaml|yaml))|\.(md|txt|json|js|jsx|ts|tsx|css|html|py|csv|yml|yaml)$/i;
+    const DEFAULT_ROLES = ["需求分析员", "代码定位员", "方案设计员", "实现工程师", "验证工程师", "交付工程师"];
+    const STAGE_ROLES = {
+      clarify: "需求分析员",
+      plan: "方案设计员",
+      locate: "代码定位员",
+      localize: "代码定位员",
+      compile: "方案设计员",
+      generate: "实现工程师",
+      verify: "验证工程师",
+      deliver: "交付工程师",
+      pr: "交付工程师"
+    };
+
+    const app = {
+      mode: localStorage.getItem(STORAGE_MODE) === "pro" ? "pro" : "normal",
+      phoneMode: localStorage.getItem(STORAGE_PHONE) === "1",
+      phoneScale: parseFloat(localStorage.getItem(STORAGE_PHONE_SCALE)) || 1,
+      messages: [],
+      confirmHistory: [],
+      currentRun: "",
+      phase: "empty",
+      statusError: "",
+      lastStatus: null,
+      attachments: [],
+      timer: null,
+      debugData: null,
+      debugLoading: false,
+      debugError: "",
+      reportLoadedFor: "",
+      controlsUnavailable: false,
+      controlBusy: false,
+      approvalMode: "allow-all",
+      skillChanges: [],
+      skillDismissSig: "",
+      skillLog: [],
+      clarifySubmitting: false,
+      clarifyAsking: false,
+      clarifyError: "",
+      seen: {},
+      relayFlashKey: "",
+      relayFlashQueue: [],
+      relayFlashTimer: null,
+      phoneAttachmentsOpen: false,
+      phoneRecording: false,
+      phoneRecognition: null,
+      objectUrls: new Set()
+    };
+
+    // Avatars use DiceBear "thumbs" — round, deterministic
+    // per seed — bundled offline in /assets/avatar.js (no CDN/network). If that bundle
+    // somehow didn't load, fall back to a simple seeded monogram so the UI never breaks.
+    function avatar(seed) {
+      const text = String(seed == null ? "StackWeft" : seed);
+      if (typeof window.StackWeftAvatar === "function") {
+        return `<img class="avatar-gen" src="${escAttr(window.StackWeftAvatar(text, 64))}" alt="" draggable="false">`;
+      }
+      let hash = 2166136261;
+      for (let i = 0; i < text.length; i += 1) {
+        hash ^= text.charCodeAt(i);
+        hash = Math.imul(hash, 16777619) >>> 0;
+      }
+      const backs = ["#e8d9bf", "#dce4d0", "#ead6d2", "#f0dfc8", "#d7e0dc", "#eadfba"];
+      const back = backs[hash % backs.length];
+      const ch = (text.trim()[0] || "·").toUpperCase();
+      return `<svg viewBox="0 0 72 72" aria-hidden="true" focusable="false">
+          <circle cx="36" cy="36" r="35" fill="${back}"/>
+          <text x="36" y="46" text-anchor="middle" font-size="30" fill="#6b4632"
+                font-family="ui-serif, Georgia, serif">${esc(ch)}</text>
+        </svg>`;
+    }
+
+    function $(selector, root) {
+      return (root || document).querySelector(selector);
+    }
+
+    const UI_BUILD = "2026-06-05-r24 (poller auto-reconnect on transient drop)";
+    function init() {
+      console.info("StackWeft UI build " + UI_BUILD);
+      document.documentElement.setAttribute("data-ui-build", UI_BUILD);
+      loadSession();
+      seedGreeting();
+      bindEvents();
+      makeDraggable($("#clarify-window"), $("#clarify-window [data-drag-handle]"));
+      makeDraggable($("#phone-window"), $("#phone-window [data-drag-handle]"));
+      makeDraggable($("#skill-window"), $("#skill-window [data-drag-handle]"));
+      renderAll();
+      if (app.currentRun && isRunActive()) {
+        startPolling(app.currentRun);
+      }
+      pollSkillChanges();
+      pollSkillLog();
+      window.setInterval(() => { pollSkillChanges(); pollSkillLog(); }, 12000);  // proposals/versions arrive post-run
+    }
+
+    async function pollSkillChanges() {
+      try {
+        const data = await fetchJson("/api/skill-changes");
+        app.skillChanges = Array.isArray(data) ? data : [];
+      } catch (error) { /* ignore */ }
+      renderSkillWindow();
+    }
+
+    function renderSkillWindow() {
+      const list = app.skillChanges || [];
+      const sig = list.map(c => c.id).join(",");
+      const hidden = list.length === 0 || sig === app.skillDismissSig;
+      $("#skill-window").classList.toggle("hidden", hidden);
+      $("#skill-count").textContent = String(list.length);
+      $("#skill-list").innerHTML = list.map(c => `
+        <div class="followup-item">
+          <div><b>${esc(c.name)}</b> · ${esc(c.op)} · <span class="muted">${esc(c.author)}</span></div>
+          <div class="small muted">${esc(c.reason || "")}</div>
+          <div class="clarify-actions">
+            <button class="primary" data-skill-approve="${escAttr(c.id)}">批准</button>
+            <button class="danger" data-skill-veto="${escAttr(c.id)}">否决</button>
+          </div>
+        </div>`).join("");
+    }
+
+    async function skillAction(id, action) {
+      try {
+        await fetch("/api/skill", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action, change_id: id })
+        });
+      } catch (error) { /* ignore */ }
+      window.setTimeout(() => { pollSkillChanges(); pollSkillLog(); }, 500);
+    }
+
+    async function pollSkillLog() {
+      if (app.mode !== "pro") return;  // version/rollback panel is Pro-only
+      try {
+        const data = await fetchJson("/api/skill-log");
+        app.skillLog = Array.isArray(data) ? data : [];
+      } catch (error) { /* ignore */ }
+      renderSkillLog();
+    }
+
+    function renderSkillLog() {
+      const log = app.skillLog || [];
+      const el = $("#skilllog"); if (!el) return;
+      $("#skilllog-state").textContent = log.length ? `${log.length} 条` : "暂无";
+      el.innerHTML = log.length ? log.map(v => `
+        <div class="skilllog-row">
+          <div class="skilllog-meta"><b>${esc(v.name)}</b> v${v.version}
+            <span class="muted">· ${esc(v.author)}</span></div>
+          <div class="small muted">${esc(v.reason || "")}</div>
+          <button class="secondary skilllog-rb" data-rb-name="${escAttr(v.name)}" data-rb-ver="${v.version}">回滚到 v${v.version}</button>
+        </div>`).join("") : `<div class="empty-note">AI/人工改过 Skill 后这里出现版本记录，可一键回滚。</div>`;
+    }
+
+    async function skillRollback(name, version) {
+      if (!window.confirm(`回滚 ${name} 到 v${version}？（会新建一个版本，可再回滚）`)) return;
+      try {
+        await fetch("/api/skill", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "rollback", name, version: Number(version) })
+        });
+      } catch (error) { /* ignore */ }
+      window.setTimeout(pollSkillLog, 500);
+    }
+
+    function bindEvents() {
+      $("#mode-normal").addEventListener("click", () => setMode("normal"));
+      $("#mode-pro").addEventListener("click", () => setMode("pro"));
+      $("#clear-history").addEventListener("click", clearHistory);
+      $("#phone-toggle").addEventListener("click", togglePhoneMode);
+      bindPhoneResize($("#phone-resize"));
+      // Ctrl/⌘ + wheel over the phone preview also nudges its size (desktop affordance).
+      $("#phone-window").addEventListener("wheel", event => {
+        if (!event.ctrlKey && !event.metaKey) return;
+        event.preventDefault();
+        setPhoneScale(app.phoneScale + (event.deltaY < 0 ? PHONE_SCALE_STEP : -PHONE_SCALE_STEP));
+      }, { passive: false });
+      applyPhoneScale();
+
+      $("#add-file").addEventListener("click", () => openFilePicker(DEFAULT_FILE_ACCEPT));
+      $("#files").addEventListener("change", event => {
+        addFiles(event.target.files);
+        event.target.value = "";
+        event.target.setAttribute("accept", DEFAULT_FILE_ACCEPT);
+      });
+
+      $("#send").addEventListener("click", submitRun);
+      $("#requirement").addEventListener("keydown", event => {
+        if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+          event.preventDefault();
+          submitRun();
+        }
+      });
+
+      $("#phone-plus").addEventListener("click", () => {
+        app.phoneAttachmentsOpen = !app.phoneAttachmentsOpen;
+        renderPhoneComposer();
+      });
+      bindPressAndHold($("#phone-mic"), startPhoneHold, stopPhoneHold);
+      $("#phone-send").addEventListener("click", submitPhoneComposer);
+      $("#phone-input").addEventListener("keydown", event => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          submitPhoneComposer();
+        }
+      });
+      $("#phone-attach-panel").addEventListener("click", event => {
+        const button = event.target.closest("[data-phone-attach]");
+        if (!button) return;
+        openFilePicker(phoneAttachAccept(button.getAttribute("data-phone-attach")));
+        app.phoneAttachmentsOpen = false;
+        renderPhoneComposer();
+      });
+
+      $("#requirement").addEventListener("paste", event => {
+        const files = event.clipboardData && event.clipboardData.files;
+        if (!files || !files.length) return;
+        event.preventDefault();
+        addFiles(files);
+      });
+
+      const composer = $("#composer");
+      ["dragenter", "dragover"].forEach(name => {
+        composer.addEventListener(name, event => {
+          if (!hasDraggedFiles(event)) return;
+          event.preventDefault();
+          composer.classList.add("dragging");
+        });
+      });
+      ["dragleave", "dragend"].forEach(name => {
+        composer.addEventListener(name, () => composer.classList.remove("dragging"));
+      });
+      composer.addEventListener("drop", event => {
+        if (!hasDraggedFiles(event)) return;
+        event.preventDefault();
+        composer.classList.remove("dragging");
+        addFiles(event.dataTransfer.files);
+      });
+
+      $("#composer-attachments").addEventListener("click", event => {
+        const button = event.target.closest("[data-remove-attachment]");
+        if (!button) return;
+        removeAttachment(button.getAttribute("data-remove-attachment"));
+      });
+
+      $("#pause-resume").addEventListener("click", () => {
+        const paused = app.lastStatus && app.lastStatus.status === "paused";
+        const interrupted = !!app.statusError && !!app.currentRun;
+        controlRun((paused || interrupted) ? "resume" : "pause");
+      });
+      $("#abort-run").addEventListener("click", () => controlRun("abort"));
+      $("#approve-btn").addEventListener("click", () => controlRun("approve"));
+      $("#deny-btn").addEventListener("click", () => controlRun("deny"));
+      $("#mode-pick .mode-menu").addEventListener("click", event => {
+        const b = event.target.closest("button[data-mode]");
+        if (!b) return;
+        setApprovalMode(b.getAttribute("data-mode"));
+        $("#mode-pick").removeAttribute("open");
+      });
+      $("#phone-approve").addEventListener("click", () => controlRun("approve"));
+      $("#phone-deny").addEventListener("click", () => controlRun("deny"));
+      $("#phone-mode-menu").addEventListener("click", event => {
+        const b = event.target.closest("button[data-mode]");
+        if (!b) return;
+        setApprovalMode(b.getAttribute("data-mode"));
+      });
+      $("#skill-list").addEventListener("click", event => {
+        const a = event.target.closest("[data-skill-approve]");
+        const v = event.target.closest("[data-skill-veto]");
+        if (a) skillAction(a.getAttribute("data-skill-approve"), "approve");
+        else if (v) skillAction(v.getAttribute("data-skill-veto"), "veto");
+      });
+      $("#skill-later").addEventListener("click", () => {
+        app.skillDismissSig = (app.skillChanges || []).map(c => c.id).join(",");
+        renderSkillWindow();
+      });
+      $("#skilllog").addEventListener("click", event => {
+        const b = event.target.closest(".skilllog-rb");
+        if (b) skillRollback(b.getAttribute("data-rb-name"), b.getAttribute("data-rb-ver"));
+      });
+
+      $("#clarify-submit").addEventListener("click", submitClarify);
+      $("#clarify-ask").addEventListener("click", askClarify);
+      $("#clarify-ask-input").addEventListener("keydown", event => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          askClarify();
+        }
+      });
+
+      $("#refresh-debug").addEventListener("click", () => fetchDebug(app.currentRun, true));
+      $("#refresh-debug-top").addEventListener("click", () => fetchDebug(app.currentRun, true));
+      $("#debug-drawer").addEventListener("toggle", () => {
+        if ($("#debug-drawer").open && app.mode === "pro" && app.currentRun) {
+          fetchDebug(app.currentRun);
+        }
+      });
+
+      window.addEventListener("beforeunload", () => {
+        app.objectUrls.forEach(url => URL.revokeObjectURL(url));
+      });
+    }
+
+    function setMode(mode) {
+      app.mode = mode === "pro" ? "pro" : "normal";
+      localStorage.setItem(STORAGE_MODE, app.mode);
+      if (app.mode === "pro" && app.currentRun) {
+        fetchDebug(app.currentRun);
+        loadReport(app.currentRun);
+      }
+      renderAll();
+    }
+
+    function togglePhoneMode() {
+      app.phoneMode = !app.phoneMode;
+      localStorage.setItem(STORAGE_PHONE, app.phoneMode ? "1" : "0");
+      renderAll();
+    }
+
+    function setPhoneScale(value, persist = true) {
+      const next = clamp(Math.round(value * 100) / 100, PHONE_SCALE_MIN, PHONE_SCALE_MAX);
+      if (next === app.phoneScale) return;
+      app.phoneScale = next;
+      if (persist) localStorage.setItem(STORAGE_PHONE_SCALE, String(next));
+      applyPhoneScale();
+    }
+
+    function applyPhoneScale() {
+      const win = $("#phone-window");
+      if (!win) return;
+      win.style.setProperty("--phone-scale", String(app.phoneScale));
+      const grip = $("#phone-resize");
+      if (grip) grip.setAttribute("aria-valuenow", String(Math.round(app.phoneScale * 100)));
+    }
+
+    // Window-style resize: grab the TOP-LEFT grip and drag up-left to grow, down-right
+    // to shrink. Bottom-right is the fixed pivot (phone grows up-left into the viewport,
+    // never off-screen); the top-left corner is the one that MOVES, and the grip lives
+    // there inside the shell so it tracks the cursor instead of sitting on a dead pivot.
+    function bindPhoneResize(grip) {
+      if (!grip) return;
+      let base = null;
+      grip.addEventListener("pointerdown", event => {
+        if (event.button !== undefined && event.button !== 0) return;
+        event.preventDefault();
+        base = { x: event.clientX, y: event.clientY, scale: app.phoneScale };
+        grip.classList.add("dragging");
+        if (grip.setPointerCapture && event.pointerId !== undefined) {
+          try { grip.setPointerCapture(event.pointerId); } catch (_) {}
+        }
+      });
+      grip.addEventListener("pointermove", event => {
+        if (!base) return;
+        event.preventDefault();
+        // up-left drag (negative dx, dy, away from the bottom-right pivot) → larger
+        const delta = ((base.x - event.clientX) + (base.y - event.clientY)) / 2;
+        setPhoneScale(base.scale + delta / PHONE_RESIZE_REF, false);
+      });
+      const finish = () => {
+        if (!base) return;
+        base = null;
+        grip.classList.remove("dragging");
+        localStorage.setItem(STORAGE_PHONE_SCALE, String(app.phoneScale));
+      };
+      grip.addEventListener("pointerup", finish);
+      grip.addEventListener("pointercancel", finish);
+      grip.addEventListener("lostpointercapture", finish);
+      // keyboard: arrows resize when grip focused
+      grip.addEventListener("keydown", event => {
+        if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
+          event.preventDefault(); setPhoneScale(app.phoneScale + PHONE_SCALE_STEP);
+        } else if (event.key === "ArrowDown" || event.key === "ArrowRight") {
+          event.preventDefault(); setPhoneScale(app.phoneScale - PHONE_SCALE_STEP);
+        }
+      });
+    }
+
+    function seedGreeting() {
+      if (app.messages.length) return;
+      app.messages.push({
+        id: makeId(),
+        role: "agent",
+        roleName: "StackWeft",
+        text: "你好，我来帮你把这次改动落地。直接说你想做什么就行——做成什么样、有哪些限制、怎样算完成；截图、日志、文档也可以一起发给我。",
+        ts: Date.now(),
+        kind: "greeting",
+        attachments: [],
+        links: [],
+        technicalLabel: "",
+        handoffFrom: "",
+        handoffTo: ""
+      });
+      saveSession();
+    }
+
+    // Clear the visible conversation only. This is purely a display reset — it does NOT
+    // abort the running delivery, change the requirement/prompt, or touch backend state;
+    // a live run keeps going and new progress still streams in.
+    function clearHistory() {
+      if (app.messages.length > 1 && !window.confirm("清空当前对话显示？（不影响正在进行的交付）")) return;
+      app.messages = [];
+      app.confirmHistory = [];
+      app.statusError = "";
+      seedGreeting();   // messages now empty → re-adds the greeting
+      saveSession();
+      renderAll();
+    }
+
+    function openFilePicker(accept) {
+      const input = $("#files");
+      input.setAttribute("accept", accept || DEFAULT_FILE_ACCEPT);
+      input.click();
+    }
+
+    function phoneAttachAccept(kind) {
+      return {
+        photo: "image/*",
+        file: DEFAULT_FILE_ACCEPT,
+        audio: "audio/*",
+        video: "video/*"
+      }[kind] || DEFAULT_FILE_ACCEPT;
+    }
+
+    function addFiles(fileList) {
+      Array.from(fileList || []).forEach(addAttachment);
+      renderAll();
+    }
+
+    function addAttachment(file) {
+      const type = file.type || inferType(file.name);
+      const kind = kindFor(type, file.name);
+      const item = {
+        id: makeId(),
+        name: file.name,
+        type,
+        size: file.size,
+        kind,
+        text: "",
+        textSnippet: "",
+        loading: false,
+        error: "",
+        previewUrl: "",
+        previewData: ""
+      };
+
+      if (kind === "image" || kind === "audio" || kind === "video") {
+        item.previewUrl = URL.createObjectURL(file);
+        app.objectUrls.add(item.previewUrl);
+      }
+
+      if (kind === "image" && file.size <= 900000) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          item.previewData = String(reader.result || "");
+          renderAll();
+        };
+        reader.readAsDataURL(file);
+      }
+
+      if (kind === "text") {
+        item.loading = true;
+        const reader = new FileReader();
+        reader.onload = () => {
+          item.text = String(reader.result || "");
+          item.textSnippet = item.text.slice(0, 8000);
+          item.loading = false;
+          renderAll();
+        };
+        reader.onerror = () => {
+          item.error = "文本读取失败";
+          item.loading = false;
+          renderAll();
+        };
+        reader.readAsText(file.slice(0, MAX_TEXT_READ));
+      }
+
+      app.attachments.push(item);
+    }
+
+    function removeAttachment(id) {
+      const index = app.attachments.findIndex(item => item.id === id);
+      if (index < 0) return;
+      const item = app.attachments.splice(index, 1)[0];
+      if (item.previewUrl) {
+        URL.revokeObjectURL(item.previewUrl);
+        app.objectUrls.delete(item.previewUrl);
+      }
+      renderAll();
+    }
+
+    function submitPhoneComposer() {
+      // NB: don't bail on isRunActive() — submitRun() routes to "append" when a run is
+      // active (same as desktop), so the phone send must reach it instead of dying here.
+      if (app.phase === "submitting" || hasLoadingAttachments()) return;
+      const input = $("#phone-input");
+      const text = input.value.trim();
+      if (!text && !app.attachments.length && !$("#requirement").value.trim()) {
+        app.statusError = "请先填写目标或加入附件。";
+        renderAll();
+        return;
+      }
+      if (text) {
+        $("#requirement").value = text;
+      }
+      input.value = "";
+      app.phoneAttachmentsOpen = false;
+      app.phoneRecording = false;
+      submitRun();
+    }
+
+    // Press-and-hold ("按住说话"): works on desktop (mouse) and touch alike. Press
+    // begins recording; release ends it. pointerleave/cancel also end so the button
+    // never gets stuck if the cursor slips off mid-hold.
+    function bindPressAndHold(el, onStart, onEnd) {
+      if (!el) return;
+      let holding = false;
+      const start = event => {
+        if (event.button !== undefined && event.button !== 0) return;
+        event.preventDefault();
+        if (holding) return;
+        holding = true;
+        onStart();
+      };
+      const end = event => {
+        if (!holding) return;
+        if (event) event.preventDefault();
+        holding = false;
+        onEnd();
+      };
+      // Pointer events cover mouse + touch + pen in one path; capture so the up event
+      // still lands here even if the cursor moves off the button while held.
+      el.addEventListener("pointerdown", event => {
+        start(event);
+        if (el.setPointerCapture && event.pointerId !== undefined) {
+          try { el.setPointerCapture(event.pointerId); } catch (_) {}
+        }
+      });
+      el.addEventListener("pointerup", end);
+      el.addEventListener("pointercancel", end);
+      el.addEventListener("lostpointercapture", end);
+      // Keyboard accessibility: hold Space/Enter to record.
+      el.addEventListener("keydown", event => {
+        if (event.key === " " || event.key === "Enter") start(event);
+      });
+      el.addEventListener("keyup", event => {
+        if (event.key === " " || event.key === "Enter") end(event);
+      });
+    }
+
+    function startPhoneHold() {
+      if (app.phoneRecording) return;
+      const input = $("#phone-input");
+      const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
+      app.phoneRecording = true;
+      renderPhoneComposer();
+      if (!Speech) {
+        // No speech engine in this browser: still give the press-and-hold affordance
+        // (recording state shows), release just returns to text entry.
+        app.phoneRecognition = null;
+        return;
+      }
+      try {
+        const recognition = new Speech();
+        app.phoneRecognition = recognition;
+        recognition.lang = "zh-CN";
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+        recognition.onresult = event => {
+          const result = event.results && event.results[0] && event.results[0][0];
+          const transcript = result && result.transcript ? String(result.transcript).trim() : "";
+          if (transcript) {
+            input.value = input.value.trim() ? `${input.value.trim()} ${transcript}` : transcript;
+          }
+        };
+        recognition.onerror = () => {
+          app.statusError = "语音识别失败，可直接输入文字。";
+        };
+        recognition.onend = () => {
+          app.phoneRecording = false;
+          app.phoneRecognition = null;
+          renderAll();
+        };
+        recognition.start();
+      } catch (error) {
+        app.phoneRecording = false;
+        app.phoneRecognition = null;
+        app.statusError = "语音输入无法启动，可直接输入文字。";
+        renderAll();
+      }
+    }
+
+    function stopPhoneHold() {
+      if (!app.phoneRecording) return;
+      if (app.phoneRecognition) {
+        try { app.phoneRecognition.stop(); } catch (_) {}  // onend clears state + renders
+        return;
+      }
+      app.phoneRecording = false;
+      renderPhoneComposer();
+      $("#phone-input").focus();
+    }
+
+    async function submitRun() {
+      const requirement = $("#requirement").value.trim();
+      if (hasLoadingAttachments()) {
+        app.statusError = "附件仍在读取，请稍后发送。";
+        renderAll();
+        return;
+      }
+      // While a run is in flight (genuinely executing), the SAME composer appends to it —
+      // sending folds the text in as an extra requirement. A paused / awaiting / restored
+      // run is NOT in flight, so a fresh message there falls through to start a new run.
+      if (isRunInFlight() && !app.controlsUnavailable) {
+        if (!requirement) {
+          app.statusError = "运行中：输入要追加的需求再发送。";
+          renderAll();
+          return;
+        }
+        $("#requirement").value = "";
+        renderAll();
+        await controlRun("append", requirement);
+        return;
+      }
+      if (!requirement && !app.attachments.length) {
+        app.statusError = "请先填写目标或加入附件。";
+        renderAll();
+        return;
+      }
+
+      clearPolling();
+      resetRunState();
+      app.phase = "submitting";
+      appendMessage("user", requirement || "（仅提交附件）", {
+        kind: "requirement",
+        roleName: "用户",
+        attachments: app.attachments.map(toBubbleAttachment)
+      });
+
+      const payload = {
+        requirement,
+        attachments: app.attachments.map(toApiAttachment)
+      };
+      app.attachments = [];
+      $("#requirement").value = "";
+      renderAll();
+
+      try {
+        const result = await fetchJson("/api/run", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        if (!result.run_id) throw new Error(result.error || "后端没有返回 run_id");
+        app.currentRun = result.run_id;
+        app.phase = "running";
+        appendMessage("agent", "WeftRun 已创建，Agent 协作已启动。", {
+          roleName: "StackWeft",
+          kind: "progress",
+          technicalLabel: "api/run"
+        });
+        saveSession();
+        renderAll();
+        startPolling(result.run_id);
+      } catch (error) {
+        app.phase = "error";
+        app.statusError = error.message || String(error);
+        appendMessage("agent", `提交失败：${app.statusError}`, {
+          roleName: "StackWeft",
+          kind: "failed",
+          technicalLabel: "api/run"
+        });
+        renderAll();
+      }
+    }
+
+    function resetRunState() {
+      app.currentRun = "";
+      app.lastStatus = null;
+      app.statusError = "";
+      app.debugData = null;
+      app.debugError = "";
+      app.debugLoading = false;
+      app.reportLoadedFor = "";
+      app.controlsUnavailable = false;
+      app.controlBusy = false;
+      app.clarifyError = "";
+      app.seen = {};
+      resetRelayFlash();
+      $("#report-frame").removeAttribute("src");
+    }
+
+    function toApiAttachment(item) {
+      const payload = {
+        name: item.name,
+        type: item.type,
+        size: item.size
+      };
+      if (typeof item.text === "string" && item.text) {
+        payload.text = item.text;
+      }
+      return payload;
+    }
+
+    function toBubbleAttachment(item) {
+      return {
+        id: item.id,
+        name: item.name,
+        type: item.type,
+        size: item.size,
+        kind: item.kind,
+        textSnippet: item.textSnippet || (item.text || "").slice(0, 8000),
+        loading: !!item.loading,
+        error: item.error || "",
+        previewUrl: item.previewUrl || "",
+        previewData: item.previewData || ""
+      };
+    }
+
+    function startPolling(id) {
+      clearPolling();
+      let fails = 0;
+      const tick = async () => {
+        try {
+          const status = await fetchJson(`/api/status?id=${encodeURIComponent(id)}`);
+          if (status.error) throw new Error(status.error);
+          if (fails > 0) { fails = 0; app.statusError = ""; }  // reconnected → clear the banner
+          applyStatus(status);
+          if (!isRunActive()) {
+            clearPolling();
+          }
+        } catch (error) {
+          // Transient drop (e.g. the backend restarted): DON'T strand the UI — keep polling
+          // and auto-reconnect. Only surface a soft banner; the run itself may still be
+          // running (or can be resumed with 继续 from where it stopped).
+          fails++;
+          app.statusError = fails < 4
+            ? "连接中断，正在重连…"
+            : "连接中断，正在持续重连。如果运行像是卡住了，点「继续」从中断处恢复。";
+          if (fails === 4) {
+            appendMessage("agent", "与后端的连接断了一下（多半是服务重启）。我会持续重连；若运行卡住，点「继续」即可从中断处恢复，不会丢上下文。", {
+              roleName: "StackWeft", kind: "progress", technicalLabel: "reconnect"
+            });
+          }
+          if (fails >= 40) {  // genuine prolonged outage → stop the zombie interval
+            clearPolling(); app.phase = "error";
+          }
+          renderAll();
+        }
+      };
+      tick();
+      app.timer = window.setInterval(tick, POLL_MS);
+    }
+
+    function clearPolling() {
+      if (app.timer) window.clearInterval(app.timer);
+      app.timer = null;
+    }
+
+    function applyStatus(status) {
+      const previous = app.lastStatus;
+      app.lastStatus = status;
+      app.currentRun = status.run_id || app.currentRun;
+      app.phase = phaseFromStatus(status.status, status);
+      app.statusError = "";
+
+      handleChatReply(status);
+      handleHandoffs(status);
+      handleClarify(status);
+      handleTerminal(status);
+
+      if (app.mode === "pro" && shouldRefreshDebug(status, previous)) {
+        fetchDebug(app.currentRun);
+      }
+      if (app.mode === "pro" && app.currentRun) {
+        loadReport(app.currentRun);
+      }
+
+      saveSession();
+      renderAll();
+    }
+
+    function handleChatReply(status) {
+      // chat_reply 出现在：非需求(needs_requirement)、不可行被打回(rejected)、
+      // 代价大需确认(awaiting_confirm) 三种情形——都用同一气泡透出。
+      const label = status.rejected ? "requirement_rejected"
+        : status.awaiting_confirm ? "awaiting_confirm"
+        : status.needs_requirement === true ? "needs_requirement" : null;
+      if (!label || !status.chat_reply) return;
+      const runId = status.run_id || app.currentRun || "pending";
+      const key = `chat_reply:${hashString(status.chat_reply)}`;
+      if (!markSeen(runId, key)) return;
+      appendMessage("agent", String(status.chat_reply), {
+        roleName: "StackWeft",
+        kind: "progress",
+        technicalLabel: label
+      });
+    }
+
+    function handleHandoffs(status) {
+      const runId = status.run_id || app.currentRun || "run";
+      const handoffs = normalizeHandoffs(status.handoffs);
+      handoffs.forEach(handoff => {
+        if (!handoff.text) return;
+        const key = `handoff:${handoffKey(handoff)}`;
+        if (!markSeen(runId, key)) return;
+        // 纯 UX：聊天里进度统一成「需求分析员」一个人在汇报（多 agent 流仍在上方接力动画里体现）
+        appendMessage("agent", handoff.text, {
+          roleName: "StackWeft",
+          kind: "progress",
+          technicalLabel: handoff.stage || ""
+        });
+        queueRelayFlash(edgeKeyForHandoff(handoff, handoffs));
+      });
+    }
+
+    function handleClarify(status) {
+      if (!status.awaiting_clarify) {
+        app.clarifyError = "";
+        return;
+      }
+      const runId = status.run_id || app.currentRun || "";
+      const questions = normalizeQuestions(status.open_questions);
+      if (!questions.length) return;
+      const signature = `${runId}:${hashString(questions.join("\n"))}`;
+      let round = app.confirmHistory.find(item => item.signature === signature);
+      if (!round) {
+        round = {
+          id: makeId(),
+          signature,
+          runId,
+          ts: Date.now(),
+          status: "awaiting",
+          questions,
+          answer: "",
+          followups: []
+        };
+        app.confirmHistory.unshift(round);
+      }
+      if (markSeen(runId, `clarify:${signature}`)) {
+        appendMessage("agent", `需要确认以下口径：\n${questions.map((q, index) => `${index + 1}. ${q}`).join("\n")}`, {
+          roleName: "StackWeft",
+          kind: "confirm",
+          technicalLabel: "awaiting_clarify"
+        });
+      }
+    }
+
+    function handleTerminal(status) {
+      const runId = status.run_id || app.currentRun || "run";
+      if (status.status === "done" && markSeen(runId, "terminal:done")) {
+        appendMessage("agent", finalSummary(status), {
+          roleName: "StackWeft",
+          kind: "progress",
+          technicalLabel: "done",
+          links: [{ href: reportHref(runId), text: "查看交付报告" }]
+        });
+      }
+      if (status.status === "failed" && markSeen(runId, "terminal:failed")) {
+        appendMessage("agent", `交付遇到阻塞：${failureDetails(status)}`, {
+          roleName: "StackWeft",
+          kind: "failed",
+          technicalLabel: "failed",
+          links: [{ href: reportHref(runId), text: "查看诊断报告" }]
+        });
+      }
+      if ((status.status === "aborted" || status.status === "abort") && markSeen(runId, "terminal:aborted")) {
+        appendMessage("agent", "运行已中止，当前记录已归档。", {
+          roleName: "StackWeft",
+          kind: "failed",
+          technicalLabel: "abort"
+        });
+      }
+    }
+
+    async function submitClarify() {
+      const answer = $("#clarify-answer").value.trim();
+      if (!app.currentRun || !answer) {
+        app.clarifyError = "请填写确认答复。";
+        renderClarifyWindow();
+        return;
+      }
+      app.clarifySubmitting = true;
+      app.clarifyError = "";
+      updateLatestConfirmAnswer(answer);
+      appendMessage("user", `确认答复：${answer}`, {
+        roleName: "用户",
+        kind: "clarify-answer"
+      });
+      renderAll();
+
+      try {
+        await fetchJson("/api/clarify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ run_id: app.currentRun, answer })
+        });
+        $("#clarify-answer").value = "";
+        app.clarifySubmitting = false;
+        app.phase = "running";
+        appendMessage("agent", "确认已收到，继续推进交付流程。", {
+          roleName: "StackWeft",
+          kind: "progress",
+          technicalLabel: "api/clarify"
+        });
+        startPolling(app.currentRun);
+      } catch (error) {
+        app.clarifySubmitting = false;
+        app.clarifyError = `提交失败：${error.message || error}`;
+        appendMessage("agent", app.clarifyError, {
+          roleName: "StackWeft",
+          kind: "failed",
+          technicalLabel: "api/clarify"
+        });
+        renderAll();
+      }
+    }
+
+    async function askClarify() {
+      const input = $("#clarify-ask-input");
+      const question = input.value.trim();
+      if (!question || !app.currentRun || app.clarifyAsking) return;
+      input.value = "";
+      app.clarifyAsking = true;
+      const latest = latestAwaitingConfirm();
+      const followup = { ts: Date.now(), question, answer: "" };
+      if (latest) {
+        latest.followups = latest.followups || [];
+        latest.followups.push(followup);
+      }
+      appendMessage("user", `追问确认点：${question}`, {
+        roleName: "用户",
+        kind: "clarify-followup"
+      });
+      renderAll();
+
+      try {
+        const result = await fetchJson("/api/clarify-ask", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ run_id: app.currentRun, question })
+        });
+        const answer = result && result.answer ? String(result.answer) : "当前没有更多补充。";
+        followup.answer = answer;
+        appendMessage("agent", answer, {
+          roleName: "StackWeft",
+          kind: "clarify-answer",
+          technicalLabel: "api/clarify-ask"
+        });
+      } catch (error) {
+        followup.answer = `追问失败：${error.message || error}`;
+        appendMessage("agent", followup.answer, {
+          roleName: "StackWeft",
+          kind: "failed",
+          technicalLabel: "api/clarify-ask"
+        });
+      } finally {
+        app.clarifyAsking = false;
+        saveSession();
+        renderAll();
+      }
+    }
+
+    async function controlRun(action, text) {
+      if (!app.currentRun || app.controlBusy || app.controlsUnavailable) return;
+      if (action === "append" && !String(text || "").trim()) {
+        app.statusError = "请先填写追加内容。";
+        renderAll();
+        return;
+      }
+      app.controlBusy = true;
+      renderAll();
+      try {
+        const response = await fetch("/api/control", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ run_id: app.currentRun, action, text: text || "" })
+        });
+        if (response.status === 404) {
+          app.controlsUnavailable = true;
+          app.controlBusy = false;
+          appendMessage("agent", "运行控制接口尚未启用，本页已收起暂停、中止与追加操作。", {
+            roleName: "StackWeft",
+            kind: "progress",
+            technicalLabel: "api/control 404"
+          });
+          renderAll();
+          return;
+        }
+        const data = await parseJsonResponse(response);
+        if (!response.ok) throw new Error(data.error || response.statusText || `HTTP ${response.status}`);
+        if (action === "append") {
+          appendMessage("user", `追加需求：${text}`, {
+            roleName: "用户",
+            kind: "requirement"
+          });
+        } else {
+          appendMessage("agent", controlAck(action), {
+            roleName: "StackWeft",
+            kind: action === "abort" ? "failed" : "progress",
+            technicalLabel: `control:${action}`
+          });
+        }
+        startPolling(app.currentRun);
+      } catch (error) {
+        app.statusError = `运行控制失败：${error.message || error}`;
+        appendMessage("agent", app.statusError, {
+          roleName: "StackWeft",
+          kind: "failed",
+          technicalLabel: "api/control"
+        });
+      } finally {
+        app.controlBusy = false;
+        renderAll();
+      }
+    }
+
+    async function fetchDebug(id, force) {
+      if (!id || app.mode !== "pro") return null;
+      if (app.debugLoading) return app.debugData;
+      if (app.debugData && app.debugData.run_id === id && !force) return app.debugData;
+      app.debugLoading = true;
+      app.debugError = "";
+      renderProPanels();
+      try {
+        app.debugData = await fetchJson(`/api/debug?id=${encodeURIComponent(id)}`);
+      } catch (error) {
+        app.debugError = error.message || String(error);
+      } finally {
+        app.debugLoading = false;
+        renderProPanels();
+      }
+      return app.debugData;
+    }
+
+    function loadReport(id) {
+      if (!id || app.mode !== "pro" || app.reportLoadedFor === id) return;
+      app.reportLoadedFor = id;
+      $("#report-frame").src = reportHref(id);
+    }
+
+    async function fetchJson(url, options) {
+      const response = await fetch(url, options);
+      const data = await parseJsonResponse(response);
+      if (!response.ok) throw new Error(data.error || response.statusText || `HTTP ${response.status}`);
+      return data;
+    }
+
+    async function parseJsonResponse(response) {
+      const text = await response.text();
+      if (!text) return {};
+      try {
+        return JSON.parse(text);
+      } catch (error) {
+        return { error: `返回内容不是 JSON：${response.status}` };
+      }
+    }
+
+    function renderAll() {
+      document.body.dataset.mode = app.mode;
+      document.body.dataset.phase = app.phase;
+      renderHeader();
+      renderRelay();
+      renderResult();
+      renderThread();
+      renderComposer();
+      renderPhoneComposer();
+      renderRuntimeControls();
+      renderApproval();
+      renderClarifyWindow();
+      renderPhoneWindow();
+      renderProPanels();
+    }
+
+    function renderHeader() {
+      $("#global-state").textContent = phaseLabel(app.phase, app.lastStatus && app.lastStatus.status);
+      $("#global-state").dataset.tone = toneForPhase(app.phase);
+      $("#run-chip").textContent = `WeftRun：${app.currentRun || "未创建"}`;
+      const branch = app.lastStatus && app.lastStatus.branch ? app.lastStatus.branch : "待创建";
+      $("#branch-chip").textContent = `分支：${branch}`;
+      $("#branch-chip").dataset.tone = branch === "待创建" ? "" : "done";
+      $("#phone-toggle").setAttribute("aria-pressed", app.phoneMode ? "true" : "false");
+    }
+
+    function renderRelay() {
+      const handoffs = normalizeHandoffs(app.lastStatus && app.lastStatus.handoffs);
+      const roles = relayRoles(handoffs);
+      const completed = completedRelayEdges(handoffs, roles);
+      const activeRole = activeRelayRole(handoffs);
+      const working = isRunInFlight();  // pulse the active agent only while genuinely executing
+      $("#relay-caption").textContent = relayCaption(handoffs);
+      $("#relay-track").innerHTML = roles.map((role, index) => {
+        const edgeKey = index < roles.length - 1 ? relayEdgeKey(roles[index], roles[index + 1]) : "";
+        const handoff = completed.get(edgeKey);
+        const nodeClass = [
+          "relay-node",
+          activeRole === role ? "active" : "",
+          activeRole === role && working ? "working" : "",
+          nodeDone(role, handoffs) ? "done" : ""
+        ].filter(Boolean).join(" ");
+        const edge = index < roles.length - 1 ? `
+          <div class="relay-edge ${handoff ? "done" : ""}" title="${escAttr(edgeTitle(handoff, roles[index], roles[index + 1]))}">
+            ${app.relayFlashKey === edgeKey ? `<span class="relay-baton" aria-hidden="true"></span>` : ""}
+            ${app.relayFlashKey === edgeKey && handoff && handoff.text ? `<span class="relay-note">${esc(handoff.text)}</span>` : ""}
+          </div>
+        ` : "";
+        return `
+          <div class="relay-step">
+            <div class="${nodeClass}">
+              <span class="relay-avatar" aria-hidden="true">${avatar(role)}</span>
+              <span class="relay-role">${esc(role)}</span>
+            </div>
+            ${edge}
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderResult() {
+      const status = app.lastStatus || {};
+      const runId = app.currentRun || status.run_id || "";
+      const terminal = isTerminalStatus(status.status);
+      const verify = status.verify && status.verify.passed === true ? "验证通过" : status.verify && status.verify.passed === false ? "验证未通过" : "验证状态待返回";
+      const branch = status.branch ? ` · ${status.branch}` : "";
+      if (!runId) {
+        $("#result-text").textContent = "做完之后，这里会给你验证结果、分支和报告。";
+        $("#result-actions").innerHTML = "";
+        return;
+      }
+      const head = terminal ? `${verify}${branch}` : `${phaseLabel(app.phase, status.status)}${branch}`;
+      $("#result-text").innerHTML = `${esc(head)}<div class="result-meta">${esc(runSummaryLine(status))}</div>`;
+      $("#result-actions").innerHTML = `
+        <a class="result-link" href="${escAttr(reportHref(runId))}" target="_blank" rel="noreferrer">打开报告</a>
+      `;
+    }
+
+    // Minimal, dependency-free Markdown → HTML for agent bubbles (escapes first, so safe).
+    function mdToHtml(src) {
+      const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      const blocks = [], inlines = [];
+      let t = String(src || "");
+      t = t.replace(/```(\w*)\n?([\s\S]*?)```/g, (m, lang, code) => {
+        blocks.push(`<pre class="md-pre"><code>${esc(code.replace(/\n$/, ""))}</code></pre>`);
+        return ` B${blocks.length - 1} `;
+      });
+      t = esc(t);
+      t = t.replace(/`([^`\n]+)`/g, (m, c) => { inlines.push(`<code class="md-code">${c}</code>`); return ` I${inlines.length - 1} `; });
+      t = t.replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>");
+      t = t.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, "$1<em>$2</em>");
+      t = t.replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer">$1</a>');
+      const lines = t.split("\n"), out = [];
+      let i = 0;
+      while (i < lines.length) {
+        const ln = lines[i];
+        const h = ln.match(/^\s*(#{1,4})\s+(.*)$/);
+        if (h) { out.push(`<div class="md-h">${h[2]}</div>`); i++; continue; }
+        if (/^\s*[-*]\s+/.test(ln)) {
+          const items = [];
+          while (i < lines.length && /^\s*[-*]\s+/.test(lines[i])) { items.push(`<li>${lines[i].replace(/^\s*[-*]\s+/, "")}</li>`); i++; }
+          out.push(`<ul class="md-ul">${items.join("")}</ul>`); continue;
+        }
+        if (/^\s*\d+\.\s+/.test(ln)) {
+          const items = [];
+          while (i < lines.length && /^\s*\d+\.\s+/.test(lines[i])) { items.push(`<li>${lines[i].replace(/^\s*\d+\.\s+/, "")}</li>`); i++; }
+          out.push(`<ol class="md-ol">${items.join("")}</ol>`); continue;
+        }
+        out.push(ln); i++;
+      }
+      t = out.join("\n").replace(/\n{2,}/g, "<br><br>").replace(/\n/g, "<br>");
+      t = t.replace(/ I(\d+) /g, (m, n) => inlines[+n]);
+      t = t.replace(/ B(\d+) /g, (m, n) => blocks[+n]);
+      // tidy: no stray <br> hugging block elements
+      return t.replace(/<br>\s*(<(?:ul|ol|pre|div class="md-h))/g, "$1").replace(/(<\/(?:ul|ol|pre|div)>)\s*<br>/g, "$1");
+    }
+
+    function renderThread() {
+      const html = app.messages.map(message => renderMessage(message, false)).join("");
+      $("#thread-inner").innerHTML = html;
+      $("#phone-thread").innerHTML = app.messages.map(message => renderMessage(message, true)).join("");
+    }
+
+    function renderMessage(message, phone) {
+      const role = message.role === "user" ? "user" : "agent";
+      const roleName = plainRoleName(message.roleName || (role === "user" ? "用户" : "Agent 协作"));
+      const handoffFrom = plainRoleName(message.handoffFrom || "");
+      const handoffTo = plainRoleName(message.handoffTo || "");
+      const classes = ["message", role, message.kind || ""].filter(Boolean).join(" ");
+      const tech = message.technicalLabel && app.mode === "pro" ? `<span class="tech"> ${esc(message.technicalLabel)}</span>` : "";
+      const route = message.kind === "handoff" && (handoffFrom || handoffTo)
+        ? `<div class="handoff-route">${esc(handoffFrom || "上一节点")}<span>→</span>${esc(handoffTo || "下一节点")}</div>`
+        : "";
+      const roleLine = role === "agent"
+        ? `<div class="role-line"><span>${esc(roleName)}</span>${tech ? `<span class="stage-tag">${tech}</span>` : ""}</div>`
+        : "";
+      const attachments = Array.isArray(message.attachments) && message.attachments.length
+        ? `<div class="attachment-grid">${message.attachments.map(item => renderAttachment(item, { removable: false, phone })).join("")}</div>`
+        : "";
+      const links = Array.isArray(message.links) && message.links.length
+        ? `<div class="message-links">${message.links.map(link => `<a class="message-link" href="${escAttr(link.href)}" target="_blank" rel="noreferrer">${esc(link.text || link.href)}</a>`).join("")}</div>`
+        : "";
+      return `
+        <article class="${classes}">
+          <span class="avatar-img" role="img" aria-label="${escAttr(roleName)}">${avatar(role === "user" ? "用户" : roleName)}</span>
+          <div class="bubble">
+            ${roleLine}
+            ${route}
+            <div class="bubble-text">${message.role === "user" ? esc(message.text || "") : mdToHtml(message.text || "")}</div>
+            ${attachments}
+            ${links}
+            <div class="bubble-meta">
+              <span>${formatTime(message.ts)}</span>
+              ${message.kind ? `<span>${esc(kindLabel(message.kind))}</span>` : ""}
+            </div>
+          </div>
+        </article>
+      `;
+    }
+
+    function renderAttachment(item, options) {
+      const removable = !!(options && options.removable);
+      const phone = !!(options && options.phone);
+      const src = item.kind === "image" ? (item.previewData || item.previewUrl || "") : item.previewUrl || "";
+      if ((item.kind === "audio" || item.kind === "video") && src && !removable) {
+        const media = item.kind === "audio"
+          ? `<audio controls src="${escAttr(src)}"></audio>`
+          : `<video controls src="${escAttr(src)}"></video>`;
+        return `
+          <article class="attachment-card inline-media">
+            <div class="attachment-info">
+              <div class="attachment-name">${esc(item.name)}</div>
+              <div class="attachment-meta">${esc(labelForKind(item.kind))} · ${formatBytes(item.size)}</div>
+            </div>
+            ${media}
+          </article>
+        `;
+      }
+      const image = item.kind === "image" && src
+        ? `<img src="${escAttr(src)}" alt="${escAttr(item.name)}">`
+        : esc(labelForKind(item.kind));
+      const remove = removable
+        ? `<button class="remove-attachment" type="button" data-remove-attachment="${escAttr(item.id)}" aria-label="移除 ${escAttr(item.name)}">×</button>`
+        : "";
+      const preview = renderTextPreview(item, phone);
+      return `
+        <article class="attachment-card">
+          <div class="attachment-thumb">${image}</div>
+          <div class="attachment-info">
+            <div class="attachment-name">${esc(item.name)}</div>
+            <div class="attachment-meta">${esc(labelForKind(item.kind))} · ${formatBytes(item.size)}${item.loading ? " · 读取中" : ""}${item.error ? ` · ${esc(item.error)}` : ""}</div>
+          </div>
+          ${remove}
+          ${preview}
+        </article>
+      `;
+    }
+
+    function renderTextPreview(item, phone) {
+      const text = item.textSnippet || "";
+      if (item.loading) return `<div class="text-preview">正在读取文本内容。</div>`;
+      if (!text) return "";
+      const limit = phone ? 700 : 8000;
+      return `
+        <details class="text-preview">
+          <summary>展开文本片段</summary>
+          <pre>${esc(text.slice(0, limit))}</pre>
+        </details>
+      `;
+    }
+
+    function renderComposer() {
+      const active = isRunInFlight();
+      const appendMode = active && !app.controlsUnavailable;  // running → same box appends
+      const awaiting = !!((app.lastStatus || {}).awaiting_approval);  // 等批准期间锁输入
+      $("#send").disabled = app.phase === "submitting" || hasLoadingAttachments()
+        || app.controlBusy || awaiting || (active && app.controlsUnavailable);
+      $("#requirement").disabled = awaiting;
+      $("#send").textContent = app.phase === "submitting" ? "提交中"
+        : appendMode ? "追加" : active ? "运行中" : "发送";
+      $("#requirement").placeholder = awaiting ? "等待你批准上方的操作…"
+        : appendMode ? "运行中：补充约束、验收点或材料说明，发送即并入本次交付。"
+        : "说说你想做的改动，比如目标和验收标准；可以粘贴截图、日志，或把文件拖进来。";
+      $("#composer-hint").textContent = app.attachments.length ? `${app.attachments.length} 个附件` : "0 个附件";
+      $("#composer-state").textContent = hasLoadingAttachments() ? "附件还在读取…"
+        : app.statusError || (awaiting ? "需要你批准（见上方）。" : appendMode ? "运行中：发送将作为追加需求并入。" : "随时可以开始。");
+      $("#composer-attachments").innerHTML = app.attachments.map(item => renderAttachment(item, { removable: true, phone: false })).join("");
+    }
+
+    function renderPhoneComposer() {
+      const active = isRunInFlight();
+      const appendMode = active && !app.controlsUnavailable;  // running → send appends
+      const awaiting = !!((app.lastStatus || {}).awaiting_approval);
+      const blocked = app.phase === "submitting" || hasLoadingAttachments() || awaiting
+        || (active && app.controlsUnavailable);
+      const panel = $("#phone-attach-panel");
+      const plus = $("#phone-plus");
+      const input = $("#phone-input");
+      const send = $("#phone-send");
+      const mic = $("#phone-mic");
+      panel.classList.toggle("hidden", !app.phoneAttachmentsOpen);
+      plus.setAttribute("aria-expanded", app.phoneAttachmentsOpen ? "true" : "false");
+      send.disabled = blocked;
+      send.textContent = app.phase === "submitting" ? "提交中" : appendMode ? "追加" : "发送";
+      input.disabled = app.phase === "submitting" || awaiting;
+      input.classList.toggle("recording", app.phoneRecording);
+      input.placeholder = awaiting ? "等待你批准…" : app.phoneRecording ? "录音中… 松开发送"
+        : appendMode ? "追加需求…" : "发消息…";
+      mic.setAttribute("aria-pressed", app.phoneRecording ? "true" : "false");
+      mic.classList.toggle("is-recording", app.phoneRecording);
+      mic.disabled = app.phase === "submitting";
+    }
+
+    function renderRuntimeControls() {
+      // When the run is just waiting for a real requirement (greeting/non-requirement),
+      // don't offer 继续/中止 — the user should simply type a concrete requirement.
+      const waitingForReq = (app.lastStatus || {}).needs_requirement === true;
+      // interrupted = the poller lost the backend (e.g. a restart). Offer 继续 to recover.
+      const interrupted = !!app.statusError && !!app.currentRun;
+      const show = !app.controlsUnavailable && !waitingForReq && (isRunActive() || interrupted);
+      $("#runtime-controls").classList.toggle("hidden", !show);
+      const paused = app.lastStatus && app.lastStatus.status === "paused";
+      // resumable if paused OR the connection was interrupted/stuck → 继续 calls resume.
+      $("#pause-resume").textContent = (paused || interrupted) ? "继续" : "暂停";
+      $("#pause-resume").disabled = app.controlBusy;
+      $("#abort-run").disabled = app.controlBusy;
+    }
+
+    function renderClarifyWindow() {
+      const status = app.lastStatus || {};
+      const awaiting = !!status.awaiting_clarify;
+      $("#clarify-window").classList.toggle("hidden", !awaiting);
+      if (!awaiting) return;
+      const questions = normalizeQuestions(status.open_questions);
+      $("#clarify-run").textContent = app.currentRun || "当前 run";
+      $("#clarify-questions").innerHTML = questions.length
+        ? `<ul>${questions.map(question => `<li>${esc(question)}</li>`).join("")}</ul>`
+        : `<div class="empty-note">后端标记需要确认，但没有返回问题文本。</div>`;
+      $("#clarify-submit").disabled = app.clarifySubmitting;
+      $("#clarify-submit").textContent = app.clarifySubmitting ? "提交中" : "提交确认";
+      $("#clarify-ask").disabled = app.clarifyAsking;
+      $("#clarify-ask").textContent = app.clarifyAsking ? "发送中" : "发送追问";
+      $("#clarify-error").textContent = app.clarifyError || "";
+      const latest = latestAwaitingConfirm();
+      const followups = latest && Array.isArray(latest.followups) ? latest.followups : [];
+      $("#clarify-followups").innerHTML = followups.map(item => `
+        <div class="followup-item">
+          <strong>问：</strong>${esc(item.question || "")}
+          ${item.answer ? `<br><strong>答：</strong>${esc(item.answer)}` : ""}
+        </div>
+      `).join("");
+    }
+
+    function renderPhoneWindow() {
+      $("#phone-window").classList.toggle("hidden", !app.phoneMode);
+      $("#phone-state").textContent = phaseLabel(app.phase, app.lastStatus && app.lastStatus.status);
+      if (app.phoneMode) {
+        requestAnimationFrame(() => {
+          const thread = $("#phone-thread");
+          thread.scrollTop = thread.scrollHeight;
+        });
+      }
+    }
+
+    function renderProPanels() {
+      renderConfirmHistory();
+      renderTokenKpis();
+      renderWeftGraph();
+      renderReportFrame();
+      renderDebug();
+    }
+
+    function renderConfirmHistory() {
+      $("#confirm-count").textContent = `${app.confirmHistory.length} 轮`;
+      const target = $("#confirm-history");
+      if (!app.confirmHistory.length) {
+        target.innerHTML = `<div class="empty-note">暂无确认点记录。</div>`;
+        return;
+      }
+      target.innerHTML = app.confirmHistory.map(round => `
+        <article class="history-item ${escAttr(round.status || "")}">
+          <strong>${esc(round.status === "answered" ? "已确认" : "待确认")} · ${formatTime(round.ts)}</strong>
+          ${round.questions && round.questions.length ? `<ul>${round.questions.map(question => `<li>${esc(question)}</li>`).join("")}</ul>` : `<div class="small muted">无问题文本。</div>`}
+          ${round.followups && round.followups.length ? `<div class="small muted" style="margin-top:8px">追问 ${round.followups.length} 次</div>` : ""}
+          ${round.answer ? `<div class="history-answer">${esc(round.answer)}</div>` : ""}
+        </article>
+      `).join("");
+    }
+
+    function renderTokenKpis() {
+      const status = app.lastStatus || {};
+      const calls = Number(status.calls) || 0;
+      const hot = (Number(status.recipe_replays) || 0) + (Number(status.det_slots) || 0);
+      // 可读性：0 次调用但有复用/确定性 → 标成热路径，而不是光秃秃的 0
+      const callsCell = calls > 0
+        ? `<b>${formatNumber(calls)}</b><span>LLM 调用</span>`
+        : (hot > 0 ? `<b title="0-LLM 热路径：复用配方/确定性模板">0 · 热</b><span>LLM 调用</span>`
+                   : `<b>0</b><span>LLM 调用</span>`);
+      $("#token-kpis").innerHTML = `
+        <div class="kpi"><b>${formatDuration(status.wall_ms)}</b><span>总用时(墙钟)</span></div>
+        <div class="kpi"><b>${formatDuration(status.latency_ms)}</b><span>LLM 延迟合计</span></div>
+        <div class="kpi">${callsCell}</div>
+        <div class="kpi"><b>${formatNumber(status.tokens_in || 0)}</b><span>tokens_in</span></div>
+        <div class="kpi"><b>${formatNumber(status.tokens_out || 0)}</b><span>tokens_out</span></div>
+        <div class="kpi"><b>${esc(costLabel(status))}</b><span>cost (估算)</span></div>
+      `;
+    }
+
+    function renderWeftGraph() {
+      const target = $("#weftgraph");
+      const nodes = mergedGraphNodes();
+      const graph = app.debugData && app.debugData.weftgraph ? app.debugData.weftgraph : {};
+      $("#graph-state").textContent = app.debugLoading ? "加载中" : app.debugError ? "加载失败" : app.debugData ? "已加载" : "等待数据";
+      if (!nodes.length && !Object.keys(graph).length) {
+        target.innerHTML = `<div class="empty-note">暂无 WeftGraph 数据。</div>`;
+        return;
+      }
+      const meta = Object.keys(graph).length ? `
+        <article class="graph-node">
+          <strong>TaskIR / WeftGraph</strong>
+          <code>${esc(formatPayload(graph))}</code>
+        </article>
+      ` : "";
+      target.innerHTML = meta + nodes.map(node => `
+        <article class="graph-node ${node.ok === true ? "ok" : node.ok === false ? "miss" : ""}">
+          <strong>${esc(node.slot || node.stage || "slot")}</strong>
+          <code>${esc(node.path || "path pending")}</code>
+          <code>${esc(formatPayload(node.anchors || node.checks || {}))}</code>
+        </article>
+      `).join("");
+    }
+
+    function renderReportFrame() {
+      const hasRun = !!app.currentRun;
+      $("#report-empty").classList.toggle("hidden", hasRun);
+      $("#report-frame").classList.toggle("hidden", !hasRun);
+      $("#report-state").textContent = hasRun ? "已挂载" : "等待 run";
+      if (app.mode === "pro" && hasRun) {
+        loadReport(app.currentRun);
+      }
+    }
+
+    function renderDebug() {
+      $("#refresh-debug").disabled = !app.currentRun || app.debugLoading;
+      $("#refresh-debug-top").disabled = !app.currentRun || app.debugLoading;
+      if (!app.currentRun) {
+        $("#debug-state").textContent = "等待 run";
+        $("#debug-content").innerHTML = `<div class="empty-note">创建 WeftRun 后可读取调试数据。</div>`;
+        return;
+      }
+      if (app.debugLoading) {
+        $("#debug-state").textContent = "加载中";
+        $("#debug-content").innerHTML = `<div class="empty-note">正在读取调试数据。</div>`;
+        return;
+      }
+      if (app.debugError) {
+        $("#debug-state").textContent = "加载失败";
+        $("#debug-content").innerHTML = `<div class="empty-note">${esc(app.debugError)}</div>`;
+        return;
+      }
+      if (!app.debugData) {
+        $("#debug-state").textContent = "未加载";
+        $("#debug-content").innerHTML = `<div class="empty-note">点击刷新读取 /api/debug。</div>`;
+        return;
+      }
+      const calls = Array.isArray(app.debugData.llm_calls) ? app.debugData.llm_calls : [];
+      const events = Array.isArray(app.debugData.events) ? app.debugData.events : [];
+      $("#debug-state").textContent = app.debugData.run_id || app.currentRun;
+      $("#debug-content").innerHTML = `
+        <div class="debug-table-wrap">
+          <table class="debug-table">
+            <thead>
+              <tr><th>stage</th><th>purpose</th><th>model</th><th class="num">in</th><th class="num">out</th><th class="num">ms</th><th>status</th></tr>
+            </thead>
+            <tbody>
+              ${calls.length ? calls.map(call => {
+                const isEmbed = (call.purpose || "").includes("embed") || call.stage === "rag";
+                const noTok = !(call.tokens_in || call.tokens_out);
+                // embedding 走 BM25 回退时没有真实 token，标注清楚别留空让人当 bug
+                const tokCell = (isEmbed && noTok)
+                  ? `<td class="num muted" colspan="2" title="embedding 走 BM25 回退，无真实 token">— BM25</td>`
+                  : `<td class="num">${formatNumber(call.tokens_in || 0)}</td><td class="num">${formatNumber(call.tokens_out || 0)}</td>`;
+                return `
+                <tr>
+                  <td>${esc(call.stage || "")}</td>
+                  <td>${esc(call.purpose || "")}</td>
+                  <td>${esc(call.api_model || call.model || "")}</td>
+                  ${tokCell}
+                  <td class="num">${formatNumber(call.latency_ms || 0)}</td>
+                  <td>${esc(call.status || "")}</td>
+                </tr>`;
+              }).join("") : `<tr><td colspan="7" class="muted">暂无 LLM 调用。</td></tr>`}
+            </tbody>
+          </table>
+        </div>
+        <h3 class="surface-title" style="margin-top:14px">Events</h3>
+        <pre class="debug-pre">${esc(events.map(event => `${event.stage || "-"} · ${event.event || "-"} ${formatPayload(event.payload)}`).join("\n") || "暂无事件。")}</pre>
+        <h3 class="surface-title" style="margin-top:14px">Raw Debug</h3>
+        <pre class="debug-pre">${esc(formatPayload(app.debugData))}</pre>
+      `;
+    }
+
+    function appendMessage(role, text, options) {
+      const opts = options || {};
+      app.messages.push({
+        id: makeId(),
+        role,
+        roleName: plainRoleName(opts.roleName || (role === "user" ? "用户" : "Agent 协作")),
+        text: String(text || ""),
+        ts: Date.now(),
+        kind: opts.kind || "",
+        attachments: opts.attachments || [],
+        links: opts.links || [],
+        technicalLabel: opts.technicalLabel || "",
+        handoffFrom: opts.handoffFrom || "",
+        handoffTo: opts.handoffTo || ""
+      });
+      if (app.messages.length > 260) {
+        app.messages = app.messages.slice(app.messages.length - 260);
+      }
+      saveSession();
+      renderAll();
+      requestAnimationFrame(scrollThreadsToBottom);
+    }
+
+    function scrollThreadsToBottom() {
+      const main = $("#thread");
+      const phone = $("#phone-thread");
+      main.scrollTop = main.scrollHeight;
+      phone.scrollTop = phone.scrollHeight;
+    }
+
+    function updateLatestConfirmAnswer(answer) {
+      const latest = latestAwaitingConfirm();
+      if (!latest) {
+        app.confirmHistory.unshift({
+          id: makeId(),
+          signature: `${app.currentRun}:manual:${Date.now()}`,
+          runId: app.currentRun,
+          ts: Date.now(),
+          status: "answered",
+          questions: normalizeQuestions(app.lastStatus && app.lastStatus.open_questions),
+          answer,
+          followups: []
+        });
+        return;
+      }
+      latest.answer = answer;
+      latest.status = "answered";
+      latest.answeredAt = Date.now();
+    }
+
+    function latestAwaitingConfirm() {
+      return app.confirmHistory.find(item => item.runId === app.currentRun && item.status === "awaiting") || null;
+    }
+
+    function markSeen(runId, key) {
+      const full = `${runId}:${key}`;
+      if (app.seen[full]) return false;
+      app.seen[full] = true;
+      return true;
+    }
+
+    function plainRoleName(value) {
+      const text = String(value || "").trim();
+      if (!text) return "";
+      const scheduler = ["织", "机", "调", "度"].join("");
+      const oldPlan = ["方案", "编", "织", "员"].join("");
+      const oldAgent = ["代", "理"].join("");
+      const replacements = new Map([
+        [scheduler, "Agent 协作"],
+        [oldPlan, "方案设计员"],
+        [`实现${oldAgent}`, "实现工程师"],
+        [`验证${oldAgent}`, "验证工程师"],
+        [`交付${oldAgent}`, "交付工程师"]
+      ]);
+      if (replacements.has(text)) return replacements.get(text);
+      return text
+        .replace(new RegExp(scheduler, "g"), "Agent 协作")
+        .replace(new RegExp(oldPlan, "g"), "方案设计员")
+        .replace(new RegExp(oldAgent, "g"), "Agent");
+    }
+
+    function normalizeHandoffs(value) {
+      if (!Array.isArray(value)) return [];
+      return value.map((item, index) => {
+        if (!item || typeof item !== "object") return null;
+        const handoff = {
+          index,
+          stage: String(item.stage || "").trim(),
+          from: plainRoleName(String(item.from || "").trim()),
+          to: plainRoleName(String(item.to || "").trim()),
+          text: String(item.text || "").trim()
+        };
+        if (!handoff.stage && !handoff.from && !handoff.to && !handoff.text) return null;
+        return handoff;
+      }).filter(Boolean);
+    }
+
+    function handoffKey(handoff) {
+      return `${handoff.stage || handoff.index}|${handoff.from}|${handoff.to}|${hashString(handoff.text)}`;
+    }
+
+    function relayRoles(handoffs) {
+      if (!handoffs.length) return DEFAULT_ROLES.slice();
+      const roles = [];
+      handoffs.forEach(handoff => {
+        const from = handoff.from || roleForStage(handoff.stage);
+        const to = handoff.to || "";
+        if (from && !roles.includes(from)) roles.push(from);
+        if (to && !roles.includes(to)) roles.push(to);
+      });
+      DEFAULT_ROLES.forEach(role => {
+        if (roles.length < 3 && !roles.includes(role)) roles.push(role);
+      });
+      return roles.length ? roles : DEFAULT_ROLES.slice();
+    }
+
+    function completedRelayEdges(handoffs, roles) {
+      const map = new Map();
+      handoffs.forEach(handoff => {
+        const key = edgeKeyForHandoff(handoff, handoffs, roles);
+        if (key) map.set(key, handoff);
+      });
+      return map;
+    }
+
+    function edgeKeyForHandoff(handoff, handoffs, rolesOverride) {
+      const roles = rolesOverride || relayRoles(handoffs || [handoff]);
+      const from = handoff.from || roleForStage(handoff.stage);
+      const to = handoff.to || roles[roles.indexOf(from) + 1] || "";
+      if (!from || !to) return "";
+      return relayEdgeKey(from, to);
+    }
+
+    function relayEdgeKey(from, to) {
+      return `${from} -> ${to}`;
+    }
+
+    function activeRelayRole(handoffs) {
+      if (handoffs.length) {
+        const latest = handoffs[handoffs.length - 1];
+        return latest.to || latest.from || roleForStage(latest.stage);
+      }
+      const status = app.lastStatus || {};
+      return roleForStage(status.stage);
+    }
+
+    function nodeDone(role, handoffs) {
+      return handoffs.some(handoff => handoff.from === role || handoff.to === role || (!handoff.to && roleForStage(handoff.stage) === role));
+    }
+
+    function relayCaption(handoffs) {
+      if (!app.currentRun) return "等你发来需求，我就开始。";
+      if (!handoffs.length) return "运行已启动，等待 Agent 交接事件。";
+      const latest = handoffs[handoffs.length - 1];
+      const from = latest.from || "上一节点";
+      const to = latest.to || roleForStage(latest.stage);
+      return `${from} → ${to}`;
+    }
+
+    function edgeTitle(handoff, from, to) {
+      if (!handoff) return `${from} → ${to}`;
+      return `${handoff.from || from} → ${handoff.to || to}${handoff.text ? `：${handoff.text}` : ""}`;
+    }
+
+    function queueRelayFlash(key) {
+      if (!key) return;
+      app.relayFlashQueue.push(key);
+      if (!app.relayFlashKey && !app.relayFlashTimer) {
+        runNextRelayFlash();
+      }
+    }
+
+    function runNextRelayFlash() {
+      const key = app.relayFlashQueue.shift();
+      if (!key) {
+        app.relayFlashKey = "";
+        app.relayFlashTimer = null;
+        renderRelay();
+        return;
+      }
+      app.relayFlashKey = key;
+      renderRelay();
+      app.relayFlashTimer = window.setTimeout(() => {
+        app.relayFlashKey = "";
+        app.relayFlashTimer = null;
+        renderRelay();
+        runNextRelayFlash();
+      }, 1750);
+    }
+
+    function resetRelayFlash() {
+      if (app.relayFlashTimer) window.clearTimeout(app.relayFlashTimer);
+      app.relayFlashKey = "";
+      app.relayFlashQueue = [];
+      app.relayFlashTimer = null;
+    }
+
+    function roleForStage(stage) {
+      return STAGE_ROLES[String(stage || "").trim()] || "Agent 协作";
+    }
+
+    function makeDraggable(panel, handle) {
+      if (!panel || !handle) return;
+      let drag = null;
+
+      function begin(clientX, clientY) {
+        const rect = panel.getBoundingClientRect();
+        drag = {
+          startX: clientX,
+          startY: clientY,
+          left: rect.left,
+          top: rect.top,
+          width: rect.width,
+          height: rect.height
+        };
+        panel.style.left = `${rect.left}px`;
+        panel.style.top = `${rect.top}px`;
+        panel.style.right = "auto";
+        panel.style.bottom = "auto";
+      }
+
+      function move(clientX, clientY) {
+        if (!drag) return;
+        const maxLeft = Math.max(8, window.innerWidth - drag.width - 8);
+        const maxTop = Math.max(8, window.innerHeight - drag.height - 8);
+        const left = clamp(drag.left + clientX - drag.startX, 8, maxLeft);
+        const top = clamp(drag.top + clientY - drag.startY, 8, maxTop);
+        panel.style.left = `${left}px`;
+        panel.style.top = `${top}px`;
+      }
+
+      function end() {
+        drag = null;
+      }
+
+      handle.addEventListener("mousedown", event => {
+        if (event.button !== 0) return;
+        event.preventDefault();
+        begin(event.clientX, event.clientY);
+      });
+      document.addEventListener("mousemove", event => {
+        if (!drag) return;
+        event.preventDefault();
+        move(event.clientX, event.clientY);
+      });
+      document.addEventListener("mouseup", end);
+
+      handle.addEventListener("touchstart", event => {
+        const touch = event.touches && event.touches[0];
+        if (!touch) return;
+        event.preventDefault();
+        begin(touch.clientX, touch.clientY);
+      }, { passive: false });
+      document.addEventListener("touchmove", event => {
+        if (!drag) return;
+        const touch = event.touches && event.touches[0];
+        if (!touch) return;
+        event.preventDefault();
+        move(touch.clientX, touch.clientY);
+      }, { passive: false });
+      document.addEventListener("touchend", end);
+      document.addEventListener("touchcancel", end);
+    }
+
+    function isRunActive() {
+      if (!app.currentRun) return false;
+      const status = app.lastStatus && app.lastStatus.status ? app.lastStatus.status : "";
+      if (status) return !isTerminalStatus(status) && app.phase !== "error";
+      // No status read yet (e.g. a run id restored from a past session). Do NOT assume
+      // active — that would lock the composer to "运行中" forever. Only treat as active
+      // if THIS session is genuinely mid-submit/run.
+      return app.phase === "running" || app.phase === "submitting";
+    }
+
+    // "In flight" = genuinely EXECUTING right now. This — and ONLY this — is when a fresh
+    // message folds in as an append. A run that is paused (awaiting clarify / confirm / a
+    // real requirement after a greeting-or-assist), rejected, terminal, or merely restored
+    // from a past session is NOT in flight: a new message there starts a new run, so the
+    // first thing you type always kicks off the flow instead of silently appending.
+    function isRunInFlight() {
+      if (!app.currentRun) return false;
+      const status = app.lastStatus && app.lastStatus.status;
+      if (status) return status === "running" && app.phase !== "error";
+      // no live status yet, but we started a run in THIS session
+      return app.phase === "running" || app.phase === "submitting";
+    }
+
+    function isTerminalStatus(status) {
+      return status === "done" || status === "failed" || status === "rejected"
+        || status === "aborted" || status === "abort";
+    }
+
+    function phaseFromStatus(status, payload) {
+      if (status === "done") return "success";
+      if (status === "failed" || status === "aborted" || status === "abort") return "failed";
+      if (status === "paused") return "paused";
+      if (payload && payload.awaiting_clarify) return "paused";
+      if (status === "running") return "running";
+      return app.phase === "submitting" ? "submitting" : "running";
+    }
+
+    function toneForPhase(phase) {
+      if (phase === "running" || phase === "submitting") return "running";
+      if (phase === "success") return "done";
+      if (phase === "failed" || phase === "paused" || phase === "error") return "failed";
+      return "";
+    }
+
+    function phaseLabel(phase, rawStatus) {
+      if (phase === "submitting") return "提交中";
+      if (phase === "running") return "运行中";
+      if (phase === "paused" || rawStatus === "paused") return "待确认";
+      if (phase === "success") return "已完成";
+      if (phase === "failed") return "已停止";
+      if (phase === "error") return "异常";
+      return "未开始";
+    }
+
+    function shouldRefreshDebug(status, previous) {
+      if (!app.currentRun || app.mode !== "pro") return false;
+      if (!previous) return true;
+      if (status.stage !== previous.stage || status.status !== previous.status) return true;
+      return JSON.stringify(status.slots || []) !== JSON.stringify(previous.slots || []);
+    }
+
+    function mergedGraphNodes() {
+      const bySlot = new Map();
+      const statusSlots = app.lastStatus && Array.isArray(app.lastStatus.slots) ? app.lastStatus.slots : [];
+      const debugGraph = app.debugData && app.debugData.weftgraph ? app.debugData.weftgraph : {};
+      const debugSlots = Array.isArray(debugGraph.slots) ? debugGraph.slots : [];
+      statusSlots.forEach(node => {
+        if (!node) return;
+        const key = node.slot || node.path || makeId();
+        bySlot.set(key, { slot: node.slot || key, path: node.path || "", ok: node.ok });
+      });
+      debugSlots.forEach(node => {
+        if (!node) return;
+        const key = node.slot || node.path || makeId();
+        const existing = bySlot.get(key) || {};
+        bySlot.set(key, Object.assign({}, existing, node));
+      });
+      return Array.from(bySlot.values());
+    }
+
+    function finalSummary(status) {
+      const lines = ["交付流程完成。"];
+      if (status.branch) lines.push(`分支：${status.branch}`);
+      if (status.verify && status.verify.passed === true) lines.push("验证：通过。");
+      if (status.verify && status.verify.passed === false) lines.push("验证：存在未通过项，请查看报告。");
+      return lines.join("\n");
+    }
+
+    function failureDetails(status) {
+      const checks = status.verify && status.verify.checks ? status.verify.checks : {};
+      const failed = Object.keys(checks).filter(key => !checks[key]);
+      if (failed.length) return `${failed.join("、")} 未通过`;
+      const slots = Array.isArray(status.slots) ? status.slots.filter(slot => slot && slot.ok === false) : [];
+      if (slots.length) return slots[0].path || slots[0].slot || "交付插槽未完成";
+      return status.error ? String(status.error) : "后端没有返回更多错误细节";
+    }
+
+    function controlAck(action) {
+      if (action === "pause") return "已请求暂停，运行会在安全点停下。";
+      if (action === "resume") return "已请求继续，运行恢复推进。";
+      if (action === "abort") return "已请求中止，等待后端确认终态。";
+      if (action === "approve") return "已批准，运行继续。";
+      if (action === "deny") return "已拒绝该操作。";
+      return "控制指令已发送。";
+    }
+
+    const MODE_LABELS = { "allow-all": "全自动", "auto": "按角色", "allow-edit": "改动放行", "always-ask": "每步问" };
+
+    // 设置全局权限模式（不依赖具体 run；后端共享，网页/手机自动同步）
+    async function setApprovalMode(mode) {
+      app.approvalMode = mode;  // 乐观更新
+      renderApproval();
+      try {
+        await fetch("/api/control", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "mode", text: mode })
+        });
+      } catch (error) { /* 静默：下次轮询会纠正 */ }
+    }
+
+    // 渲染批准条 + 权限模式当前值（网页 + 手机共用一份后端状态）
+    function renderApproval() {
+      const st = app.lastStatus || {};
+      const awaiting = !!(st.awaiting_approval && st.pending_approval);
+      $("#approval-bar").classList.toggle("hidden", !awaiting);
+      if (awaiting) {
+        $("#approval-label").textContent = st.pending_approval.label || "一个操作";
+        $("#approval-detail").textContent = st.pending_approval.detail || "";
+        $("#approve-btn").disabled = app.controlBusy;
+        $("#deny-btn").disabled = app.controlBusy;
+      }
+      const mode = st.approval_mode || app.approvalMode || "allow-all";
+      const tag = MODE_LABELS[mode] || mode;
+      const now = $("#mode-pick-now"); if (now) now.textContent = " · " + tag;
+      document.querySelectorAll("#mode-pick .mode-menu button, #phone-mode-menu button").forEach(b =>
+        b.setAttribute("aria-current", b.getAttribute("data-mode") === mode ? "true" : "false"));
+      const pnow = $("#phone-mode-now"); if (pnow) pnow.textContent = tag;
+      // phone approval bar mirror
+      const pbar = $("#phone-approval");
+      if (pbar) {
+        pbar.classList.toggle("hidden", !awaiting);
+        if (awaiting) $("#phone-approval-label").textContent = st.pending_approval.label || "一个操作";
+      }
+    }
+
+    function costLabel(status) {
+      if (status.cost_usd !== undefined) return `$${Number(status.cost_usd || 0).toFixed(4)}`;
+      if (status.cost !== undefined) return String(status.cost);
+      if (status.estimated_cost !== undefined) return String(status.estimated_cost);
+      if (status.cost_cents !== undefined) return `$${(Number(status.cost_cents || 0) / 100).toFixed(4)}`;
+      return "待返回";
+    }
+
+    function normalizeQuestions(value) {
+      if (!Array.isArray(value)) return [];
+      return value.map(item => String(item || "").trim()).filter(Boolean);
+    }
+
+    function reportHref(id) {
+      return `/api/report?id=${encodeURIComponent(id)}`;
+    }
+
+    function kindFor(type, name) {
+      if (/^image\//i.test(type)) return "image";
+      if (/^audio\//i.test(type)) return "audio";
+      if (/^video\//i.test(type)) return "video";
+      if (TEXTY.test(type) || TEXTY.test(name)) return "text";
+      return "file";
+    }
+
+    function inferType(name) {
+      const ext = String(name || "").split(".").pop().toLowerCase();
+      const map = {
+        md: "text/markdown",
+        txt: "text/plain",
+        json: "application/json",
+        js: "application/javascript",
+        jsx: "application/javascript",
+        ts: "text/typescript",
+        tsx: "text/typescript",
+        css: "text/css",
+        html: "text/html",
+        py: "text/x-python",
+        csv: "text/csv",
+        yml: "application/x-yaml",
+        yaml: "application/x-yaml",
+        pdf: "application/pdf"
+      };
+      return map[ext] || "application/octet-stream";
+    }
+
+    function labelForKind(kind) {
+      return {
+        image: "图片",
+        audio: "音频",
+        video: "视频",
+        text: "文本",
+        file: "文件"
+      }[kind] || "文件";
+    }
+
+    function kindLabel(kind) {
+      return {
+        greeting: "开场",
+        requirement: "需求",
+        progress: "进度",
+        handoff: "交接",
+        failed: "异常",
+        confirm: "确认点",
+        "clarify-answer": "确认答复",
+        "clarify-followup": "追问"
+      }[kind] || kind;
+    }
+
+    function hasDraggedFiles(event) {
+      const types = event.dataTransfer && event.dataTransfer.types ? Array.from(event.dataTransfer.types) : [];
+      return types.includes("Files");
+    }
+
+    function hasLoadingAttachments() {
+      return app.attachments.some(item => item.loading);
+    }
+
+    function formatBytes(bytes) {
+      const value = Number(bytes) || 0;
+      if (value < 1024) return `${value} B`;
+      if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
+      return `${(value / 1024 / 1024).toFixed(1)} MB`;
+    }
+
+    function formatNumber(value) {
+      return (Number(value) || 0).toLocaleString();
+    }
+
+    // 墙钟/延迟：毫秒 → 人类可读（带单位）
+    function formatDuration(ms) {
+      ms = Number(ms) || 0;
+      if (ms <= 0) return "—";
+      if (ms < 1000) return `${ms} ms`;
+      const s = ms / 1000;
+      if (s < 60) return `${s.toFixed(1)} s`;
+      const m = Math.floor(s / 60), r = Math.round(s % 60);
+      return `${m} 分 ${r} 秒`;
+    }
+
+    // 可读性：把成本/用时拼成带语义标签的一行；0-LLM 热路径不显示光秃秃的 0
+    function runSummaryLine(status) {
+      const calls = Number(status.calls) || 0;
+      const replays = Number(status.recipe_replays) || 0;
+      const det = Number(status.det_slots) || 0;
+      const parts = [];
+      parts.push(`用时 ${formatDuration(status.wall_ms)}`);
+      if (status.latency_ms) parts.push(`LLM 延迟 ${formatDuration(status.latency_ms)}`);
+      if (calls > 0) {
+        parts.push(`${calls} 次 LLM 调用 · ${formatNumber(status.tokens_in)} tokens_in`);
+      } else if (replays || det) {
+        parts.push("0-LLM 热路径（复用配方 / 确定性模板）");
+      }
+      if (calls > 0 && (replays || det)) {
+        const hot = [];
+        if (replays) hot.push(`${replays} 槽复用`);
+        if (det) hot.push(`${det} 槽确定性`);
+        parts.push(hot.join(" · ") + "（0-LLM）");
+      }
+      return parts.join("　·　");
+    }
+
+    function formatTime(ts) {
+      if (!ts) return "";
+      return new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    }
+
+    function formatPayload(payload) {
+      if (payload === undefined || payload === null) return "";
+      if (typeof payload === "string") return payload;
+      try {
+        return JSON.stringify(payload, null, 2);
+      } catch (error) {
+        return String(payload);
+      }
+    }
+
+    function hashString(value) {
+      const text = String(value || "");
+      let hash = 0;
+      for (let i = 0; i < text.length; i += 1) {
+        hash = ((hash << 5) - hash + text.charCodeAt(i)) | 0;
+      }
+      return String(Math.abs(hash));
+    }
+
+    function makeId() {
+      return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    }
+
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    }
+
+    function loadSession() {
+      try {
+        const raw = localStorage.getItem(STORAGE_SESSION);
+        if (!raw) return;
+        const saved = JSON.parse(raw);
+        app.messages = Array.isArray(saved.messages) ? saved.messages : [];
+        app.confirmHistory = Array.isArray(saved.confirmHistory) ? saved.confirmHistory : [];
+        app.currentRun = saved.currentRun || "";
+        app.phase = saved.phase || "empty";
+        app.lastStatus = saved.lastStatus || null;
+        app.seen = saved.seen || {};
+        app.controlsUnavailable = !!saved.controlsUnavailable;
+      } catch (error) {
+        app.messages = [];
+        app.confirmHistory = [];
+      }
+    }
+
+    function saveSession() {
+      const snapshot = {
+        messages: app.messages.map(message => Object.assign({}, message, {
+          attachments: (message.attachments || []).map(attachment => Object.assign({}, attachment, {
+            previewUrl: "",
+            previewData: attachment.previewData || "",
+            textSnippet: (attachment.textSnippet || "").slice(0, 8000)
+          }))
+        })),
+        confirmHistory: app.confirmHistory,
+        currentRun: app.currentRun,
+        phase: app.phase,
+        lastStatus: app.lastStatus,
+        seen: app.seen,
+        controlsUnavailable: app.controlsUnavailable
+      };
+      try {
+        localStorage.setItem(STORAGE_SESSION, JSON.stringify(snapshot));
+      } catch (error) {
+        const pruned = Object.assign({}, snapshot, {
+          messages: snapshot.messages.map(message => Object.assign({}, message, {
+            attachments: (message.attachments || []).map(attachment => Object.assign({}, attachment, {
+              previewData: "",
+              textSnippet: (attachment.textSnippet || "").slice(0, 500)
+            }))
+          }))
+        });
+        try {
+          localStorage.setItem(STORAGE_SESSION, JSON.stringify(pruned));
+        } catch (secondError) {
+          localStorage.removeItem(STORAGE_SESSION);
+        }
+      }
+    }
+
+    function esc(value) {
+      return String(value).replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      }[char]));
+    }
+
+    function escAttr(value) {
+      return esc(value).replace(/`/g, "&#96;");
+    }
+
+    init();
+  </script>
+</body>
+</html>

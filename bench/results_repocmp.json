@@ -1,0 +1,58 @@
+{
+  "repo": "/tmp/genrepo",
+  "entity": "Product",
+  "field": "subtitle",
+  "model": "GLM-5.1",
+  "weft": {
+    "arm": "weft",
+    "run_id": "a574e72d674b4e2c9ebe2dc4661ce43c",
+    "secs": 58.5,
+    "calls": 3,
+    "tokens_total": 5578,
+    "tokens_in": 2229,
+    "tokens_out": 3349,
+    "llm_ms": 56400,
+    "coverage": {
+      "api_model": true,
+      "api_write": true,
+      "web_render": true,
+      "files": [
+        "server/bl/product.js",
+        "server/models/product.js",
+        "webclient/src/components/product/Form.js",
+        "webclient/src/components/product/List.js",
+        "webclient/src/components/product/View.js"
+      ],
+      "layers": 3,
+      "threaded": true
+    }
+  },
+  "baseline": {
+    "arm": "baseline",
+    "run_id": "046c8a3816de4211b3ead991a2733f8f",
+    "secs": 128.9,
+    "calls": 9,
+    "tokens_total": 158005,
+    "tokens_in": 147891,
+    "tokens_out": 10114,
+    "llm_ms": 127425,
+    "coverage": {
+      "api_model": true,
+      "api_write": true,
+      "web_render": true,
+      "files": [
+        "server/bl/product.js",
+        "server/models/product.js",
+        "server/routes/product.js",
+        "webclient/src/components/product/Form.js",
+        "webclient/src/components/product/List.js",
+        "webclient/src/components/product/State/actionCreator.js",
+        "webclient/src/components/product/State/initialState.js",
+        "webclient/src/components/product/State/reducer.js",
+        "webclient/src/components/product/View.js"
+      ],
+      "layers": 3,
+      "threaded": true
+    }
+  }
+}

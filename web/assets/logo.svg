@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="380" height="88" viewBox="0 0 380 88" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">StackWeft logo</title>
+  <desc id="desc">Primary StackWeft wordmark with an interlaced warp-and-weft thread mark.</desc>
+  <defs>
+    <style>
+      .word-cn {
+        font-family: Inter, "SF Pro Display", "Segoe UI", "PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif;
+        font-size: 31px;
+        font-weight: 720;
+        letter-spacing: 0;
+      }
+      .word-en {
+        font-family: Inter, "SF Pro Display", "Segoe UI", Arial, sans-serif;
+        font-size: 25px;
+        font-weight: 650;
+        letter-spacing: 0;
+      }
+    </style>
+  </defs>
+  <g transform="translate(8 12)">
+    <path d="M18 9H48L55 16V46" stroke="#2b6cff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.3"/>
+    <path d="M9 18V48L16 55H46" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.24"/>
+    <rect x="16" y="13" width="5" height="38" rx="2.5" fill="#2ecc71"/>
+    <rect x="30" y="13" width="5" height="38" rx="2.5" fill="#2b6cff"/>
+    <rect x="44" y="13" width="5" height="38" rx="2.5" fill="#2ecc71"/>
+    <rect x="13" y="16" width="38" height="5" rx="2.5" fill="#2b6cff"/>
+    <rect x="13" y="30" width="38" height="5" rx="2.5" fill="#e6e6e6" opacity="0.88"/>
+    <rect x="13" y="44" width="38" height="5" rx="2.5" fill="#2b6cff"/>
+    <rect x="15" y="15" width="7" height="7" rx="2" fill="#0f1115"/>
+    <rect x="43" y="15" width="7" height="7" rx="2" fill="#0f1115"/>
+    <rect x="29" y="29" width="7" height="7" rx="2" fill="#0f1115"/>
+    <rect x="15" y="43" width="7" height="7" rx="2" fill="#0f1115"/>
+    <rect x="43" y="43" width="7" height="7" rx="2" fill="#0f1115"/>
+    <rect x="16" y="11" width="5" height="15" rx="2.5" fill="#2ecc71"/>
+    <rect x="44" y="11" width="5" height="15" rx="2.5" fill="#2ecc71"/>
+    <rect x="30" y="25" width="5" height="15" rx="2.5" fill="#2b6cff"/>
+    <rect x="16" y="39" width="5" height="15" rx="2.5" fill="#2ecc71"/>
+    <rect x="44" y="39" width="5" height="15" rx="2.5" fill="#2ecc71"/>
+  </g>
+  <text class="word-en" x="88" y="52" fill="#e6e6e6">Stack<tspan fill="#2b6cff">Weft</tspan></text>
+</svg>

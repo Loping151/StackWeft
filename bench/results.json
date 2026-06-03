@@ -1,0 +1,127 @@
+{
+  "rounds": [
+    "subtitle:text",
+    "coverImage:image",
+    "subtitle:text"
+  ],
+  "results": [
+    {
+      "arm": "weft",
+      "field": "subtitle",
+      "run_id": "e71b7143e4a14e4d8c1017a5378d527f",
+      "secs": 96.6,
+      "calls": 5,
+      "tokens_in": 2927,
+      "tokens_out": 4198,
+      "tokens_total": 7125,
+      "verify": {
+        "passed": true,
+        "backend": true,
+        "frontend": true,
+        "probes": 3
+      },
+      "round": 1
+    },
+    {
+      "arm": "baseline",
+      "field": "subtitle",
+      "run_id": "92c843a497444a039aca3af7d08b8cbc",
+      "secs": 141.6,
+      "calls": 4,
+      "tokens_in": 113401,
+      "tokens_out": 6905,
+      "tokens_total": 120306,
+      "verify": {
+        "passed": true,
+        "backend": true,
+        "frontend": true,
+        "probes": 3
+      },
+      "round": 1
+    },
+    {
+      "arm": "weft",
+      "field": "coverImage",
+      "run_id": "6639259897ea41c4a41202b55f53d535",
+      "secs": 92.3,
+      "calls": 5,
+      "tokens_in": 2987,
+      "tokens_out": 4111,
+      "tokens_total": 7098,
+      "verify": {
+        "passed": true,
+        "backend": true,
+        "frontend": true,
+        "probes": 3
+      },
+      "round": 2
+    },
+    {
+      "arm": "baseline",
+      "field": "coverImage",
+      "run_id": "6a5d66c315664f6a99b8c14a47cab926",
+      "secs": 125.7,
+      "calls": 7,
+      "tokens_in": 71997,
+      "tokens_out": 4847,
+      "tokens_total": 76844,
+      "verify": {
+        "passed": true,
+        "backend": true,
+        "frontend": true,
+        "probes": 3
+      },
+      "round": 2
+    },
+    {
+      "arm": "weft",
+      "field": "subtitle",
+      "run_id": "2f749d90365e4b7ab0bafe5e6f1880ad",
+      "secs": 89.6,
+      "calls": 5,
+      "tokens_in": 2838,
+      "tokens_out": 4397,
+      "tokens_total": 7235,
+      "verify": {
+        "passed": true,
+        "backend": true,
+        "frontend": true,
+        "probes": 3
+      },
+      "round": 3
+    },
+    {
+      "arm": "baseline",
+      "field": "subtitle",
+      "run_id": "df7c1c82fa9b47ddbc0ef3401d1e3965",
+      "secs": 125.8,
+      "calls": 16,
+      "tokens_in": 67231,
+      "tokens_out": 3737,
+      "tokens_total": 70968,
+      "verify": {
+        "passed": true,
+        "backend": true,
+        "frontend": true,
+        "probes": 3
+      },
+      "round": 3
+    }
+  ],
+  "totals": {
+    "weft": {
+      "passed": 3,
+      "of": 3,
+      "tokens_total": 21458,
+      "calls": 15,
+      "secs": 278.5
+    },
+    "baseline": {
+      "passed": 3,
+      "of": 3,
+      "tokens_total": 268118,
+      "calls": 27,
+      "secs": 393.1
+    }
+  }
+}

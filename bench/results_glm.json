@@ -1,0 +1,136 @@
+{
+  "rounds": [
+    "subtitle:text",
+    "coverImage:image",
+    "subtitle:text"
+  ],
+  "model": "GLM-5.1",
+  "results": [
+    {
+      "arm": "weft",
+      "field": "subtitle",
+      "run_id": "23d78fbd5a2b4481b6fb86a6902936bc",
+      "secs": 90.8,
+      "calls": 5,
+      "tokens_in": 2850,
+      "tokens_out": 3906,
+      "tokens_total": 6756,
+      "llm_ms": 79245,
+      "verify": {
+        "passed": true,
+        "backend": true,
+        "frontend": true,
+        "probes": 3
+      },
+      "round": 1
+    },
+    {
+      "arm": "baseline",
+      "field": "subtitle",
+      "run_id": "156ad8915c5f4c0f8e0472f20baeb8f4",
+      "secs": 144.3,
+      "calls": 5,
+      "tokens_in": 115984,
+      "tokens_out": 7594,
+      "tokens_total": 123578,
+      "llm_ms": 138656,
+      "verify": {
+        "passed": true,
+        "backend": true,
+        "frontend": true,
+        "probes": 3
+      },
+      "round": 1
+    },
+    {
+      "arm": "weft",
+      "field": "coverImage",
+      "run_id": "37882cf982e641ef8f9b411879612e06",
+      "secs": 92.7,
+      "calls": 5,
+      "tokens_in": 3275,
+      "tokens_out": 3734,
+      "tokens_total": 7009,
+      "llm_ms": 82946,
+      "verify": {
+        "passed": true,
+        "backend": true,
+        "frontend": true,
+        "probes": 3
+      },
+      "round": 2
+    },
+    {
+      "arm": "baseline",
+      "field": "coverImage",
+      "run_id": "f7c33050f28c44b3adce03d93ab5ab20",
+      "secs": 131.7,
+      "calls": 24,
+      "tokens_in": 90838,
+      "tokens_out": 3535,
+      "tokens_total": 94373,
+      "llm_ms": 129258,
+      "verify": {
+        "passed": true,
+        "backend": true,
+        "frontend": true,
+        "probes": 3
+      },
+      "round": 2
+    },
+    {
+      "arm": "weft",
+      "field": "subtitle",
+      "run_id": "b940adea21d846e5995203913e7908e1",
+      "secs": 76.3,
+      "calls": 5,
+      "tokens_in": 2808,
+      "tokens_out": 3082,
+      "tokens_total": 5890,
+      "llm_ms": 67091,
+      "verify": {
+        "passed": true,
+        "backend": true,
+        "frontend": true,
+        "probes": 3
+      },
+      "round": 3
+    },
+    {
+      "arm": "baseline",
+      "field": "subtitle",
+      "run_id": "1e014c76545b4bc7b003261360804bc9",
+      "secs": 139.6,
+      "calls": 24,
+      "tokens_in": 88124,
+      "tokens_out": 3316,
+      "tokens_total": 91440,
+      "llm_ms": 136785,
+      "verify": {
+        "passed": true,
+        "backend": true,
+        "frontend": true,
+        "probes": 3
+      },
+      "round": 3
+    }
+  ],
+  "totals": {
+    "weft": {
+      "passed": 3,
+      "of": 3,
+      "tokens_total": 19655,
+      "calls": 15,
+      "llm_ms": 229282,
+      "secs": 259.8
+    },
+    "baseline": {
+      "passed": 3,
+      "of": 3,
+      "tokens_total": 309391,
+      "calls": 53,
+      "llm_ms": 404699,
+      "secs": 415.6
+    }
+  }
+}
