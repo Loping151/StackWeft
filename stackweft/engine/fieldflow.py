@@ -147,6 +147,48 @@ def _fill(template: str | None, *, field: str, shadow: str, type_: str,
     return out
 
 
+def _coerce_min_count(value: Any, default: int = 1) -> int:
+    try:
+        return max(1, int(value))
+    except (TypeError, ValueError):
+        return max(1, int(default))
+
+
+def _fill_evidence(raw_evidence: list[Any], *, field: str, shadow: str, type_: str,
+                   extra: dict[str, str] | None, default_min_count: int) -> list[dict[str, Any]]:
+    """Expand skill-declared evidence into regex/count checks.
+
+    Backward compatible shape:
+      "evidence": ["{field}"], "min_count": 2
+
+    More precise shape:
+      "evidence": [{"pattern": "\\.{field}\\s*=", "min_count": 1}]
+
+    The core only evaluates the contract the Skill declares; repo-specific shape
+    decisions belong in profiled/generated Skills, not here.
+    """
+    checks: list[dict[str, Any]] = []
+    for item in raw_evidence:
+        label = None
+        if isinstance(item, dict):
+            pattern = item.get("pattern") or item.get("regex") or item.get("evidence")
+            min_count = _coerce_min_count(item.get("min_count"), default_min_count)
+            label = item.get("label")
+        else:
+            pattern = item
+            min_count = default_min_count
+        if pattern is None:
+            continue
+        filled = _fill(str(pattern), field=field, shadow=shadow, type_=type_, extra=extra)
+        if not filled:
+            continue
+        check = {"pattern": filled, "min_count": min_count}
+        if label:
+            check["label"] = str(label)
+        checks.append(check)
+    return checks
+
+
 def _find_file(sb: tools.Sandbox, glob: str) -> str | None:
     for fp in sorted(sb.root.rglob("*")):
         if not fp.is_file() or any(p in tools._SKIP_DIRS for p in fp.parts):
@@ -218,11 +260,15 @@ def build_graph(sb: tools.Sandbox, skill_text: str, *,
         # Real repos differ by layer ABSENCE / MERGE / RENAME (e.g. no services/ dir),
         # not just folder names — so an unresolved OPTIONAL slot is skipped (not fail-fast).
         required = raw.get("required", True)
+        default_min_count = _coerce_min_count(raw.get("min_count"), 1)
+        evidence_checks = _fill_evidence(raw.get("evidence", []), field=field, shadow=shadow,
+                                         type_=type_, extra=extra,
+                                         default_min_count=default_min_count)
         node: dict[str, Any] = {
             "slot": raw["slot"], "layer": raw["layer"], "kind": raw["kind"],
-            "evidence": [_fill(e, field=field, shadow=shadow, type_=type_, extra=extra)
-                         for e in raw.get("evidence", [])],
-            "min_count": raw.get("min_count", 1),
+            "evidence": [e["pattern"] for e in evidence_checks],
+            "evidence_checks": evidence_checks,
+            "min_count": default_min_count,
             "requirement_delta": raw.get("requirement_delta", False),
         }
         if raw["kind"] == "edit":
@@ -575,6 +621,38 @@ def render_new_files(sb: tools.Sandbox, taskir: dict[str, Any]) -> list[str]:
 
 # ----------------------------------------------------------------------------- evidence gate
 
+def evidence_checks(node: dict[str, Any]) -> list[dict[str, Any]]:
+    checks = node.get("evidence_checks") or []
+    if checks:
+        out: list[dict[str, Any]] = []
+        for c in checks:
+            pattern = c.get("pattern")
+            if not pattern:
+                continue
+            item = {"pattern": pattern,
+                    "min_count": _coerce_min_count(c.get("min_count"),
+                                                   node.get("min_count", 1))}
+            if c.get("label"):
+                item["label"] = c["label"]
+            out.append(item)
+        return out
+    return [{"pattern": ev, "min_count": _coerce_min_count(node.get("min_count"), 1)}
+            for ev in node.get("evidence", [])]
+
+
+def evidence_brief(node: dict[str, Any]) -> list[str]:
+    return [f"/{c['pattern']}/ >= {c['min_count']}x" for c in evidence_checks(node)]
+
+
+def evidence_ok(sb: tools.Sandbox, path: str, node: dict[str, Any]) -> tuple[bool, str]:
+    for check in evidence_checks(node):
+        pattern, need = check["pattern"], check["min_count"]
+        hits = _grep_lines(sb, path, pattern)
+        if len(hits) < need:
+            return False, f"pattern /{pattern}/ found {len(hits)}x, need {need}x"
+    return True, "ok"
+
+
 def cross_stack_evidence(sb: tools.Sandbox, taskir: dict[str, Any]) -> dict[str, Any]:
     """Per-slot evidence check: each slot's field-evidence regex must appear
     ``min_count`` times in its file. Returns the structured failure repair uses."""
@@ -583,14 +661,15 @@ def cross_stack_evidence(sb: tools.Sandbox, taskir: dict[str, Any]) -> dict[str,
         path = n.get("path")
         if not path or not (sb.root / path).is_file():
             missing.append({"slot": n["slot"], "path": path,
-                            "expected_evidence": n["evidence"], "reason": "file missing"})
+                            "expected_evidence": evidence_brief(n), "reason": "file missing"})
             continue
-        for ev in n["evidence"]:
-            hits = _grep_lines(sb, path, ev)
-            if len(hits) < n["min_count"]:
+        for check in evidence_checks(n):
+            pattern, need = check["pattern"], check["min_count"]
+            hits = _grep_lines(sb, path, pattern)
+            if len(hits) < need:
                 missing.append({"slot": n["slot"], "path": path,
-                                "expected_evidence": n["evidence"],
-                                "found": len(hits), "need": n["min_count"]})
+                                "expected_evidence": evidence_brief(n),
+                                "found": len(hits), "need": need})
                 break
     return {"passed": not missing, "missing_slots": missing,
             "field": taskir["field"]}

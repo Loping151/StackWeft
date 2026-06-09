@@ -437,16 +437,9 @@ def _run_slot(ctx: RunContext, node: dict[str, Any], taskir: dict[str, Any],
     slot's evidence deterministically and retry once with the specific miss."""
     field, shadow, type_ = taskir["field"], taskir["shadow_field"], taskir["type"]
     path, anchors = node["path"], node.get("anchors", [])
-    ev_patterns, min_count = node["evidence"], node["min_count"]
+    ev_checks = fieldflow.evidence_brief(node)
 
-    def evidence_ok() -> tuple[bool, str]:
-        for ev in ev_patterns:
-            hits = fieldflow._grep_lines(ctx.sandbox, path, ev)
-            if len(hits) < min_count:
-                return False, f"pattern /{ev}/ found {len(hits)}x, need {min_count}x"
-        return True, "ok"
-
-    ok, why = evidence_ok()
+    ok, why = fieldflow.evidence_ok(ctx.sandbox, path, node)
     if ok:
         return {"slot": node["slot"], "ok": True, "skipped": "already satisfied"}
 
@@ -457,13 +450,12 @@ def _run_slot(ctx: RunContext, node: dict[str, Any], taskir: dict[str, Any],
             f"TARGET FILE: {path}\n"
             f"ANCHOR LINES (1-indexed; the shadow field / insertion point is here): {anchors}\n\n"
             f"INSTRUCTION: {node['instruction']}\n\n"
-            f"REQUIRED EVIDENCE after your edit — these regex must each match "
-            f"≥{min_count}× in {path}: {ev_patterns}\n\n"
+            f"REQUIRED EVIDENCE after your edit in {path}: {ev_checks}\n\n"
             f"Start by reading a window around the anchor lines, then make the edit.")
     last = ""
     for _try in range(2):
         res = _gen_worker(ctx, system=system, task=task, max_rounds=max_rounds)
-        ok, why = evidence_ok()
+        ok, why = fieldflow.evidence_ok(ctx.sandbox, path, node)
         obs.log_event(ctx.run_id, stage="generate", event="slot_filled",
                       payload={"slot": node["slot"], "path": path, "ok": ok,
                                "why": why, "rounds": res.rounds, "try": _try + 1})
@@ -518,15 +510,9 @@ def _run_slot_oneshot(ctx: RunContext, node: dict[str, Any], taskir: dict[str, A
     satisfy the slot (caller falls back to the agentic worker so reliability holds)."""
     field, shadow, type_ = taskir["field"], taskir["shadow_field"], taskir["type"]
     path, anchors = node["path"], node.get("anchors", [])
-    ev_patterns, min_count = node["evidence"], node["min_count"]
+    ev_checks = fieldflow.evidence_brief(node)
 
-    def evidence_ok() -> tuple[bool, str]:
-        for ev in ev_patterns:
-            if len(fieldflow._grep_lines(ctx.sandbox, path, ev)) < min_count:
-                return False, f"/{ev}/ < {min_count}x"
-        return True, "ok"
-
-    ok, _ = evidence_ok()
+    ok, _ = fieldflow.evidence_ok(ctx.sandbox, path, node)
     if ok:
         return {"slot": node["slot"], "ok": True, "skipped": "already satisfied", "mode": "oneshot"}
 
@@ -556,7 +542,7 @@ def _run_slot_oneshot(ctx: RunContext, node: dict[str, Any], taskir: dict[str, A
         if rep:
             before = (ctx.sandbox.root / path).read_text(encoding="utf-8", errors="replace")
             applied = ctx.sandbox.multi_edit([{"path": path, "old": e["old"], "new": e["new"]} for e in rep])
-            ok, why = evidence_ok()
+            ok, why = fieldflow.evidence_ok(ctx.sandbox, path, node)
             obs.log_event(ctx.run_id, stage="generate", event="recipe_replay",
                           payload={"slot": node["slot"], "ok": ok, "why": why, "applied": applied[:120]})
             if ok:
@@ -569,7 +555,7 @@ def _run_slot_oneshot(ctx: RunContext, node: dict[str, Any], taskir: dict[str, A
     if node.get("det"):
         before = (ctx.sandbox.root / path).read_text(encoding="utf-8", errors="replace")
         if fieldflow.apply_det(ctx.sandbox, node):
-            ok, why = evidence_ok()
+            ok, why = fieldflow.evidence_ok(ctx.sandbox, path, node)
             obs.log_event(ctx.run_id, stage="generate", event="slot_filled",
                           payload={"slot": node["slot"], "path": path, "ok": ok, "why": why,
                                    "mode": "deterministic", "llm_calls": 0})
@@ -579,7 +565,7 @@ def _run_slot_oneshot(ctx: RunContext, node: dict[str, Any], taskir: dict[str, A
 
     base = (f"FILE: {path}\nFIELD: `{field}` (type {type_}); mirror existing field `{shadow}`.\n"
             f"INSTRUCTION: {node['instruction']}\n"
-            f"REQUIRED EVIDENCE (each regex must appear >= {min_count}x after your edit): {ev_patterns}\n\n"
+            f"REQUIRED EVIDENCE after your edit: {ev_checks}\n\n"
             f"CURRENT CODE (verbatim — copy each `old` from here):\n```\n{window}\n```\nReturn the JSON now.")
     task, why = base, ""
     for attempt in range(retries + 1):
@@ -592,7 +578,7 @@ def _run_slot_oneshot(ctx: RunContext, node: dict[str, Any], taskir: dict[str, A
         edits = [{"path": e.get("path", path), "old": e["old"], "new": e["new"]}
                  for e in edits if isinstance(e, dict) and e.get("old") is not None]
         applied = ctx.sandbox.multi_edit(edits) if edits else "no valid edits in JSON"
-        ok, why = evidence_ok()
+        ok, why = fieldflow.evidence_ok(ctx.sandbox, path, node)
         obs.log_event(ctx.run_id, stage="generate", event="slot_filled",
                       payload={"slot": node["slot"], "path": path, "ok": ok, "why": why,
                                "mode": "oneshot", "try": attempt + 1, "applied": applied[:120]})

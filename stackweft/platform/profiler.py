@@ -54,13 +54,15 @@ class RepoProfile:
     detail_anchor: str             # regex to locate the destructure line (anchor_fallback)
     list_anchor: str               # {shadow}-templated regex: how shadow renders in the list
     service_required: bool = True  # some repos have no separate write-service layer
+    backend_create_update_evidence: list[Any] = _dc_field(default_factory=list)
     notes: list[str] = _dc_field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return {k: getattr(self, k) for k in
                 ("repo_id", "framework", "entity", "entity_aliases", "shadow_field",
                  "default_type", "table", "globs", "detail_destructure", "detail_var",
-                 "detail_anchor", "list_anchor", "service_required", "notes")}
+                 "detail_anchor", "list_anchor", "service_required",
+                 "backend_create_update_evidence", "notes")}
 
 
 def _rel(root: Path, p: Path) -> str:
@@ -245,6 +247,7 @@ def profile_repo(sb, *, run_id: str | None = None, level: float = 0.6) -> RepoPr
     aliases = _aliases(entity)
     list_anchor = _discover_render_anchor(root, g["frontend_list_render"], el, shadow)
     service_required = _resolve(root, g["frontend_write_service"]) is not None
+    backend_evidence = _backend_create_update_evidence(root, g["backend_create_update"], shadow)
     model_txt = _read(_resolve(root, g["backend_model"])) or ""
     tm = re.search(r"tableName\s*:\s*[\"'](\w+)[\"']", model_txt)
     table = tm.group(1) if tm else (entity + "s")  # else Sequelize default plural (Article→Articles)
@@ -254,7 +257,7 @@ def profile_repo(sb, *, run_id: str | None = None, level: float = 0.6) -> RepoPr
         default_type="STRING", table=table, globs=g,
         detail_destructure=detail["destructure"], detail_var=detail["var"],
         detail_anchor=detail["anchor"], list_anchor=list_anchor,
-        service_required=service_required,
+        service_required=service_required, backend_create_update_evidence=backend_evidence,
         notes=[f"entities={list(entities)}", f"shadow picked from {sorted(attrs)}",
                f"list_anchor={list_anchor}", f"service_required={service_required}"])
 
@@ -351,6 +354,48 @@ def _discover_render_anchor(root: Path, rel: str, el: str, shadow: str) -> str:
     return r"\b" + "{shadow}" + r"\b"
 
 
+def _count_lines(txt: str, pattern: str) -> int:
+    rx = re.compile(pattern)
+    return sum(1 for line in txt.splitlines() if rx.search(line))
+
+
+def _backend_create_update_evidence(root: Path, rel: str, shadow: str) -> list[Any]:
+    """Derive evidence from how the existing shadow field is wired in the target file.
+
+    The profiler owns repo-shape inference. The engine later only checks the declared
+    regex/count contract, so the main field-flow core stays repo-agnostic.
+    """
+    f = _resolve(root, rel)
+    txt = _read(f) if f else ""
+    shadow_rx = re.escape(shadow)
+    destructures = _count_lines(
+        txt, rf"\{{[^}}]*\b{shadow_rx}\b[^}}]*\}}\s*=\s*[^;\n]*(?:req|request)\.body")
+    object_pairs = _count_lines(txt, rf"\b{shadow_rx}\s*:\s*{shadow_rx}\b")
+    assignments = _count_lines(txt, rf"\.\s*{shadow_rx}\s*=")
+
+    min_total = max(2, min(8, destructures + object_pairs + assignments))
+    evidence: list[Any] = [{"pattern": "{field}", "min_count": min_total}]
+    if destructures:
+        evidence.append({
+            "label": "request destructure",
+            "pattern": r"\{[^}]*\b{field}\b[^}]*\}\s*=\s*[^;\n]*(?:req|request)\.body",
+            "min_count": destructures,
+        })
+    if object_pairs:
+        evidence.append({
+            "label": "create/write object",
+            "pattern": r"\b{field}\s*:\s*{field}\b",
+            "min_count": object_pairs,
+        })
+    if assignments:
+        evidence.append({
+            "label": "update assignment",
+            "pattern": r"\.\s*{field}\s*=",
+            "min_count": assignments,
+        })
+    return evidence
+
+
 def _aliases(entity: str) -> list[str]:
     el = entity.lower()
     cn = {"article": "文章", "post": "博文", "comment": "评论", "user": "用户",
@@ -442,7 +487,7 @@ def _slot_spec(p: RepoProfile) -> dict[str, Any]:
                              "attribute. Mirror how `{shadow}` is declared. Field is OPTIONAL.")},
             {"slot": "backend_create_update", "layer": "backend", "kind": "edit",
              "glob": g["backend_create_update"], "shadow_anchor": "{shadow}",
-             "evidence": ["{field}"], "min_count": 2,
+             "evidence": p.backend_create_update_evidence or ["{field}"], "min_count": 2,
              "instruction": ("Thread `{field}` through the create and update handlers exactly "
                              "like `{shadow}`, but NOT required: add it to the request "
                              "destructure, the `.create({...})` object, and the update branch "
