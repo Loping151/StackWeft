@@ -2643,7 +2643,7 @@
       return (root || document).querySelector(selector);
     }
 
-    const UI_BUILD = "2026-06-05-r24 (poller auto-reconnect on transient drop)";
+    const UI_BUILD = "2026-06-05-r25 (清空历史 = full reset: drop run pointer + stop polling)";
     function init() {
       console.info("StackWeft UI build " + UI_BUILD);
       document.documentElement.setAttribute("data-ui-build", UI_BUILD);
@@ -2960,14 +2960,17 @@
       saveSession();
     }
 
-    // Clear the visible conversation only. This is purely a display reset — it does NOT
-    // abort the running delivery, change the requirement/prompt, or touch backend state;
-    // a live run keeps going and new progress still streams in.
+    // Reset the UI to its initial state: clear the conversation AND drop the run pointer
+    // (currentRun / phase / status / seen) and stop polling, so a reload won't restore a
+    // stale run. It does NOT abort a delivery on the backend or touch backend state — a
+    // live run keeps going, you just stop following it here. Re-seeds the greeting.
     function clearHistory() {
-      if (app.messages.length > 1 && !window.confirm("清空当前对话显示？（不影响正在进行的交付）")) return;
+      if (app.messages.length > 1 && !window.confirm("清空当前对话并回到初始状态？（不影响正在进行的交付）")) return;
+      clearPolling();
+      resetRunState();
+      app.phase = "empty";
       app.messages = [];
       app.confirmHistory = [];
-      app.statusError = "";
       seedGreeting();   // messages now empty → re-adds the greeting
       saveSession();
       renderAll();

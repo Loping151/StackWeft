@@ -119,13 +119,19 @@ def by_id(model_id: str) -> ModelSpec:
 
 
 def for_level(level: float, prefer: str | None = None) -> ModelSpec:
-    """Cheapest model with ``spec.level >= level``; fallback to strongest."""
+    """Cheapest model with ``spec.level >= level``; fallback to strongest.
+
+    ``STACKWEFT_PREFER_MODEL`` pins routing to one model id (e.g. ``codex``) for
+    every call when the caller didn't pass an explicit ``prefer`` — set it to run
+    the whole pipeline on a single model, unset it to restore tiered routing."""
     if not REGISTRY:
         raise RuntimeError(f"no models configured — set credentials in {SECRETS_PATH}")
+    prefer = prefer or _get("STACKWEFT_PREFER_MODEL") or None
     eligible = sorted((s for s in REGISTRY if s.level >= level), key=lambda s: s.level)
     pool = eligible or sorted(REGISTRY, key=lambda s: -s.level)
     if prefer:
-        for s in pool:
+        # honour the preference even if it sits below the requested level
+        for s in (*pool, *REGISTRY):
             if s.id == prefer:
                 return s
     return pool[0]
