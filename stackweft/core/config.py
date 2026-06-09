@@ -66,7 +66,7 @@ class ModelSpec:
 
 
 def _build_registry() -> list[ModelSpec]:
-    base = _get("STACKWEFT_BASE", "https://a.loping151.net")
+    base = _get("STACKWEFT_BASE", "https://your-gateway")
     key = _get("STACKWEFT_TASK_KEY")
     specs = [
         # execution tier — cheap and clean for structured calls

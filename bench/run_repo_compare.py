@@ -20,12 +20,12 @@ import os
 import subprocess
 import sys
 import time
+from pathlib import Path
 
-sys.path.insert(0, "/home/loping/stackweft")
+HOME = str(Path(__file__).resolve().parent.parent)  # repo root (this file lives in bench/)
+sys.path.insert(0, HOME)
 from stackweft.core import obs                                   # noqa: E402
 from stackweft.engine import layout, tools, worker               # noqa: E402
-
-HOME = "/home/loping/stackweft"
 
 
 def _sh(cmd: str, cwd: str, timeout: int = 120) -> str:
