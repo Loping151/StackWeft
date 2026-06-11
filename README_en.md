@@ -125,6 +125,19 @@ assets/      README art (icon / banner)
 - Tiered model routing — pick the cheapest sufficient model, fall back on error; pure `urllib` to the gateway, no third‑party runtime SDK.
 - Natural language first, default 中文 (`STACKWEFT_LANG`).
 
+## Citation
+
+If this project helps your research, please cite:
+
+```bibtex
+@misc{wang2026stackweft,
+  title        = {StackWeft: Field-Flow Compilation for Token-Efficient Full-Stack Software Delivery},
+  author       = {Wang, Kailing},
+  year         = {2026},
+  howpublished = {\url{https://github.com/Loping151/StackWeft}}
+}
+```
+
 ## Credits
 
 Thanks to **ByteDance** for supporting this project.
