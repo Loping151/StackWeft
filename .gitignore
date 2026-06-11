@@ -6,6 +6,8 @@ secrets.env
 *.crt
 # requirements PDF embeds a provider API key (§7.1, 严禁外泄) — keep out of git
 *.pdf
+# …except the published paper (no secrets inside)
+!assets/stackweft-paper.pdf
 
 # ── submission drafts (local working copy, not part of the repo) ──
 submission/

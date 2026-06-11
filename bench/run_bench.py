@@ -104,7 +104,7 @@ def arm_weft(field: str, kind: str, key: str = "") -> dict:
     env = {**os.environ, "PYTHONPATH": HOME}
     if key:
         env["STACKWEFT_TASK_KEY"] = key  # route this arm through a distinct gateway key
-    p = subprocess.run(["python3", "-m", "stackweft.cli", "run", req],
+    p = subprocess.run(["python3", "-m", "stackweft.cli", "run", req, "--repo", REPO],
                        cwd=HOME, capture_output=True, text=True, timeout=900, env=env)
     rid = ""
     for line in p.stdout.splitlines():
@@ -165,6 +165,9 @@ def main() -> int:
     if args.model:  # uniform model: both tiers → this model, for both arms (weft subprocess inherits env)
         os.environ["STACKWEFT_KIMI_MODEL"] = args.model
         os.environ["STACKWEFT_GLM_MODEL"] = args.model
+        # Day-to-day secrets may pin a preferred top-tier model. A benchmark
+        # --model flag must override that pin so the run is truly held constant.
+        os.environ["STACKWEFT_PREFER_MODEL"] = "glm"
         from stackweft.core import config
         config.reload()
         print(f"uniform model = {args.model} (both arms, all tiers)")

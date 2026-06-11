@@ -144,6 +144,9 @@ def main() -> int:
     args = ap.parse_args()
     if args.model:
         os.environ["STACKWEFT_KIMI_MODEL"] = os.environ["STACKWEFT_GLM_MODEL"] = args.model
+        # Day-to-day secrets may pin a preferred top-tier model. A benchmark
+        # --model flag must override that pin so the run is truly held constant.
+        os.environ["STACKWEFT_PREFER_MODEL"] = "glm"
         from stackweft.core import config
         config.reload()
         print(f"uniform model = {args.model}")

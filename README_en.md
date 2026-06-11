@@ -14,6 +14,7 @@
 [![deps](https://img.shields.io/badge/runtime%20deps-stdlib%20only-success)](#)
 [![state](https://img.shields.io/badge/state-SQLite-003B57?logo=sqlite&logoColor=white)](#)
 [![protocol](https://img.shields.io/badge/IM-OneBot-5865F2)](#ecosystem)
+[![Paper](https://img.shields.io/badge/Paper-PDF-B31B1B?logo=latex&logoColor=white)](assets/stackweft-paper.pdf)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 <img src="assets/header.png" width="100%" alt="StackWeft">
